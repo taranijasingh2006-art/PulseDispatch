@@ -8,7 +8,9 @@ import json
 import base64
 import asyncio
 from pathlib import Path
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -105,7 +107,9 @@ async def set_tool_delay(req: DelayRequest):
     """Sets synthetic tool delay for stress testing."""
     orchestrator.tool_delay_override = req.delay_sec
     return {"status": "ok", "delay_sec": req.delay_sec}
-
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("static/favicon.ico")
 @app.get("/api/replay/timeline")
 async def get_replay_timeline():
     """Returns chronologically ordered events for incident replay."""
