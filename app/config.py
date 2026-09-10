@@ -24,7 +24,7 @@ class Settings:
     
     # Telemetry and Server
     HOST: str = os.getenv("HOST", "0.0.0.0")
-    PORT: int = int(os.getenv("PORT", "8080"))
+    PORT: int = int(os.getenv("PORT") or "8080")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
 settings = Settings()
