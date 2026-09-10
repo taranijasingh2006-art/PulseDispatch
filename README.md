@@ -1,4 +1,4 @@
-# ?? PulseDispatch (AegisVoice)
+# PulseDispatch (AegisVoice)
 ### Full-Duplex Voice-Native Emergency Incident Copilot powered by Rime Neural TTS
 
 Built for **DataForge .pathway x Rime Hackathon Challenge** (Problem Statement 2: Voice-Native Product).
@@ -48,7 +48,7 @@ In fast-paced emergency medical response, trauma surgery, and field rescue:
 | **Language** | `en` (English) | Target delivery language |
 | **Audio Format** | `mp3` / `pcm` | High-fidelity compressed or raw audio |
 | **Sampling Rate** | `22050` Hz | Standard medical voice fidelity |
-| **Speed Alpha** | `1.0` (0.8x – 1.3x adjustable) | Pacing tuned for urgent operational clarity |
+| **Speed Alpha** | `1.0` (0.8x â€“ 1.3x adjustable) | Pacing tuned for urgent operational clarity |
 | **Transport** | Streaming HTTP Chunked $\rightarrow$ Full-Duplex WebSockets $\rightarrow$ Web Audio API |
 
 ---
