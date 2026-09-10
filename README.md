@@ -132,7 +132,7 @@ pytest -v
 ```
 
 ### Running the Live UI Stress Test:
-1. Open `http://localhost:8000`.
+1. Open https://pulse-dispatch-git-main-data-divers.vercel.app/.
 2. Click **"Run 3.5s Delayed Tool + Interruption Test"** or say *"Run stress test lookup with deliberate 3.5 second delay"*.
 3. Watch the Telemetry HUD:
    - Status filler plays immediately.
