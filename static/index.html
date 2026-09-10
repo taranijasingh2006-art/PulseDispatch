@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PULSE DISPATCH // Emergency Incident Operations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#F8FAFC] text-[#0F172A] min-h-screen select-none font-sans">
+
+    <!-- SIMULATION / OPERATIONAL NOTICE BANNER -->
+    <div class="bg-[#F1F5F9] border-b border-[#E2E8F0] px-4 py-1.5 flex items-center justify-between text-xs text-[#475569]">
+        <div class="flex items-center space-x-2">
+            <span class="px-2 py-0.5 rounded bg-[#FEF3C7] text-[#D97706] font-semibold text-[10px] border border-[#FDE68A] font-mono">
+                SIMULATION / EDUCATIONAL DEMO
+            </span>
+            <span class="font-medium text-[#1E293B]">Synthetic data • Not for clinical use</span>
+        </div>
+        <div class="flex items-center space-x-3 text-xs font-mono text-[#64748B]">
+            <span>PulseDispatch v2.4</span>
+            <span>•</span>
+            <span class="text-[#2563EB]">Interruption Safety Architecture</span>
+        </div>
+    </div>
+
+    <!-- TOP SYSTEM HEADER -->
+    <header class="bg-[#FFFFFF] border-b border-[#E2E8F0] px-4 py-2.5 flex items-center justify-between shadow-xs">
+        <div class="flex items-center space-x-4">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="font-bold text-base text-[#0F172A] tracking-tight">PULSE DISPATCH</span>
+                    <span class="text-xs px-2 py-0.5 rounded bg-[#F1F5F9] text-[#475569] border border-[#CBD5E1] font-mono font-medium">
+                        RIME • LIVE
+                    </span>
+                </div>
+                <div class="text-xs text-[#64748B] flex items-center gap-2 mt-0.5">
+                    <span>Voice Incident Orchestrator & Dispatch Console</span>
+                    <span>•</span>
+                    <span>Incident: <b id="headerIncidentId" class="text-[#2563EB] font-mono font-semibold">MED-7829</b></span>
+                    <span>•</span>
+                    <span class="text-[#16A34A] font-medium">System READY</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Controls & Indicators -->
+        <div class="flex items-center space-x-2 text-xs font-mono">
+            <!-- Primary Action: RUN JUDGE DEMO -->
+            <button id="judgeDemoBtn" class="btn-primary-action shadow-xs" title="Run 1-click automated interruption benchmark proof">
+                <i class="fa-solid fa-play"></i>
+                <div class="text-left leading-tight">
+                    <div>RUN JUDGE DEMO</div>
+                    <div class="text-[9px] text-blue-100 opacity-90 font-normal font-sans">1-click interruption proof</div>
+                </div>
+            </button>
+
+            <!-- Mode Switcher: RESONANCE vs NAIVE -->
+            <button id="modeToggleBtn" class="btn-secondary">
+                <i class="fa-solid fa-shield-halved text-[#16A34A]"></i>
+                <span>MODE:</span>
+                <span id="modeLabelText" class="font-bold text-[#0F172A]">RESONANCE (FENCED)</span>
+            </button>
+
+            <!-- Incident Replay Button -->
+            <button id="replayIncidentBtn" class="btn-secondary">
+                <i class="fa-solid fa-rotate-left text-[#2563EB]"></i>
+                <span>REPLAY</span>
+            </button>
+
+            <!-- CPR Metronome -->
+            <button id="cprMetronomeBtn" class="btn-secondary">
+                <i class="fa-solid fa-heart-pulse text-[#DC2626]"></i>
+                <span>CPR (110 BPM):</span>
+                <span id="cprStatusText" class="text-[#64748B]">OFF</span>
+            </button>
+
+            <!-- Audio Mute / Toggle -->
+            <button id="audioMuteToggleBtn" class="btn-secondary">
+                <i class="fa-solid fa-volume-high text-[#16A34A]" id="audioMuteIcon"></i>
+                <span id="audioMuteText">🔊 AUDIO ON</span>
+            </button>
+
+            <!-- WS Net Status Pill -->
+            <div id="netStatusPill" class="flex items-center space-x-1.5 bg-[#F8FAFC] border border-[#E2E8F0] px-2.5 py-1 rounded">
+                <span class="h-2 w-2 rounded-full bg-[#16A34A]"></span>
+                <span class="text-[11px] font-medium text-[#16A34A]">WS CONNECTED</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- INCIDENT SCENARIO SELECTOR BAR -->
+    <section class="bg-[#FFFFFF] border-b border-[#E2E8F0] px-4 py-1.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <span class="text-xs font-semibold text-[#64748B] uppercase tracking-wider">
+                INCIDENTS:
+            </span>
+            <div class="flex space-x-1" id="scenarioButtons">
+                <button class="incident-tab-btn active" data-index="0">
+                    1. Pediatric Anaphylaxis (18kg)
+                </button>
+                <button class="incident-tab-btn" data-index="1">
+                    2. Rollover Extrication (75kg)
+                </button>
+                <button class="incident-tab-btn" data-index="2">
+                    3. STEMI / V-Tach (85kg)
+                </button>
+                <button class="incident-tab-btn" data-index="3">
+                    4. Flash Thermal Burn (80kg)
+                </button>
+                <button class="incident-tab-btn" data-index="4">
+                    5. Opioid Overdose (65kg)
+                </button>
+            </div>
+        </div>
+
+        <button id="randomizeIncidentBtn" class="btn-secondary text-xs">
+            <i class="fa-solid fa-shuffle text-[#2563EB]"></i> Randomize Case
+        </button>
+    </section>
+
+    <!-- MAIN 3-COLUMN WORKSTATION LAYOUT -->
+    <main class="max-w-[1850px] mx-auto p-3 grid grid-cols-1 lg:grid-cols-12 gap-3">
+
+        <!-- LEFT COLUMN: Incident Sheet, Vitals & Stale Result Firewall (Cols 1-3) -->
+        <div class="lg:col-span-3 space-y-3">
+            
+            <!-- INCIDENT CALL SHEET -->
+            <div class="ws-panel">
+                <div class="ws-panel-header">
+                    <span>INCIDENT MANIFEST</span>
+                    <span id="incidentIdText" class="text-[#2563EB] font-mono font-semibold">MED-7829</span>
+                </div>
+                
+                <div class="p-3 space-y-2 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span id="triageBadge" class="px-2 py-0.5 rounded bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] font-semibold font-mono text-[10px]">
+                            PRIORITY 1 - IMMEDIATE
+                        </span>
+                        <span class="text-[#64748B] text-[11px] font-mono">DISPATCH: 911-ALS</span>
+                    </div>
+
+                    <div class="pt-1">
+                        <h2 id="incidentTitleText" class="text-sm font-semibold text-[#0F172A] leading-snug">
+                            Pediatric Anaphylaxis & Severe Stridor
+                        </h2>
+                        <div id="incidentLocationText" class="text-xs text-[#64748B] mt-0.5 flex items-center gap-1">
+                            <i class="fa-solid fa-location-dot text-[#DC2626]"></i>
+                            <span>Lincoln Elementary Cafeteria, Zone 2</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 space-y-1.5 border-t border-[#E2E8F0]">
+                        <div class="data-row">
+                            <span class="text-[#64748B]">PATIENT</span>
+                            <span id="patName" class="font-semibold text-[#0F172A]">Tommy R.</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="text-[#64748B]">AGE / SEX</span>
+                            <span id="patAgeGender" class="font-medium text-[#0F172A]">5 YRS / MALE</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="text-[#64748B]">WEIGHT</span>
+                            <span id="patWeight" class="font-semibold text-[#D97706] font-mono">18.0 KG</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="text-[#64748B]">ALLERGIES</span>
+                            <span id="patAllergy" class="font-semibold text-[#DC2626]">Peanut / Ingestion</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-[#E2E8F0]">
+                        <span class="text-[11px] font-semibold text-[#64748B] block">CHIEF COMPLAINT</span>
+                        <p id="patComplaint" class="text-xs text-[#334155] mt-0.5 leading-relaxed">Acute respiratory distress, facial angioedema, inspiratory stridor.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIVE PHYSIO TELEMETRY & ECG MONITOR -->
+            <div class="ws-panel">
+                <div class="ws-panel-header">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-heart-pulse text-[#DC2626]"></i> PHYSIO TELEMETRY
+                    </span>
+                    <button id="editVitalsBtn" class="text-[11px] text-[#2563EB] hover:underline font-mono">
+                        [Edit Vitals]
+                    </button>
+                </div>
+
+                <div class="p-3 space-y-2.5">
+                    <!-- ECG Canvas -->
+                    <div class="bg-[#0F172A] border border-[#1E293B] rounded h-12 relative overflow-hidden flex items-center">
+                        <canvas id="ecgCanvas" class="w-full h-full"></canvas>
+                        <div class="absolute top-1 left-2 text-[9px] text-[#22C55E] font-mono">LEAD II // 25mm/s</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-center font-mono">
+                        <div class="p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0]">
+                            <div class="text-[10px] text-[#64748B]">HEART RATE</div>
+                            <div class="text-lg font-bold text-[#DC2626]" id="valHR">142 <span class="text-xs text-[#94A3B8]">BPM</span></div>
+                            <div class="text-[9px] text-[#DC2626]" id="hrStatus">TACHYCARDIA</div>
+                        </div>
+                        <div class="p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0]">
+                            <div class="text-[10px] text-[#64748B]">NIBP (mmHg)</div>
+                            <div class="text-lg font-bold text-[#0F172A]" id="valBP">78/48</div>
+                            <div class="text-[9px] text-[#2563EB]" id="bpStatus">HYPOTENSION</div>
+                        </div>
+                        <div class="p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0]">
+                            <div class="text-[10px] text-[#64748B]">SpO2 %</div>
+                            <div class="text-lg font-bold text-[#16A34A]" id="valSpO2">89 <span class="text-xs text-[#94A3B8]">%</span></div>
+                            <div class="text-[9px] text-[#16A34A]" id="spo2Status">HYPOXEMIA</div>
+                        </div>
+                        <div class="p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0]">
+                            <div class="text-[10px] text-[#64748B]">GCS SCORE</div>
+                            <div class="text-lg font-bold text-[#0F172A]" id="valGCS">13 <span class="text-xs text-[#94A3B8]">/ 15</span></div>
+                            <div class="text-[9px] text-[#64748B]" id="gcsStatus">MILD IMPAIRMENT</div>
+                        </div>
+                    </div>
+
+                    <!-- Epinephrine Timer -->
+                    <div class="bg-[#FFFBEB] border border-[#FDE68A] p-2 rounded flex items-center justify-between text-xs">
+                        <div>
+                            <div class="text-[10px] text-[#D97706] font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-stopwatch"></i> EPI DOSE INTERVAL
+                            </div>
+                            <div class="text-xs font-semibold text-[#92400E] font-mono mt-0.5" id="epiTimerDisplay">03:00 (REPEAT IN: 2m 45s)</div>
+                        </div>
+                        <button id="resetEpiTimerBtn" class="btn-secondary text-[10px]">
+                            RESET 3M
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STALE RESULT FIREWALL CARD -->
+            <div class="ws-panel">
+                <div class="ws-panel-header">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield text-[#2563EB]"></i> STALE RESULT FIREWALL
+                    </span>
+                    <span id="firewallBlockedBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0] font-mono font-semibold">
+                        PROTECTED
+                    </span>
+                </div>
+
+                <div class="p-3 space-y-2 text-xs">
+                    <p class="text-[#64748B] text-[11px] leading-relaxed">
+                        Fences background tool returns from old request IDs when the operator interrupts mid-turn.
+                    </p>
+
+                    <div id="staleFirewallLog" class="bg-[#F8FAFC] border border-[#E2E8F0] rounded p-2 space-y-1.5 max-h-44 overflow-y-auto font-mono text-[11px]">
+                        <div class="p-2 rounded bg-[#FFFFFF] border border-[#E2E8F0]">
+                            <div class="flex justify-between items-center text-[10px] text-[#64748B] mb-0.5">
+                                <span>STATUS: READY</span>
+                                <span class="text-[#2563EB]">IDLE</span>
+                            </div>
+                            <p class="text-[#64748B]">No stale tool results detected. Interruption fencing firewall active.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CENTER COLUMN: HERO VOICE CONSOLE, STATE MACHINE & TRANSCRIPT (Cols 4-8) -->
+        <div class="lg:col-span-5 space-y-3">
+            
+            <!-- CENTRAL HERO RIME VOICE CONSOLE -->
+            <div class="ws-panel-hero">
+                <div class="ws-panel-header flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full bg-[#16A34A]" id="pttLed"></span>
+                        <span class="font-semibold text-xs text-[#0F172A]">VOICE CHANNEL // RIME FULL DUPLEX</span>
+                    </div>
+                    
+                    <!-- Core Visual Signature Indicator -->
+                    <div class="process-flow-badge" id="processFlowBadge">
+                        <span class="sig-step" id="sigStepInterrupt">INTERRUPT</span>
+                        <span class="arrow">→</span>
+                        <span class="sig-step" id="sigStepFlush">FLUSH</span>
+                        <span class="arrow">→</span>
+                        <span class="sig-step" id="sigStepFence">FENCE</span>
+                        <span class="arrow">→</span>
+                        <span class="sig-step" id="sigStepRecover">RECOVER</span>
+                    </div>
+                </div>
+
+                <div class="p-3.5 space-y-3">
+                    <!-- Oscilloscope & Live Hearing Banner -->
+                    <div class="bg-[#0F172A] border border-[#1E293B] rounded h-24 relative overflow-hidden flex items-center justify-center">
+                        <canvas id="oscilloscopeCanvas" class="w-full h-full"></canvas>
+                        
+                        <div id="liveHearingBanner" class="absolute bottom-2 left-2 right-2 bg-[#FFFFFF] border border-[#BFDBFE] px-2.5 py-1 rounded text-xs text-[#0F172A] flex items-center gap-2 hidden shadow-xs">
+                            <i class="fa-solid fa-microphone text-[#16A34A]"></i>
+                            <span class="font-semibold text-[#2563EB] text-[10px] font-mono">HEARING:</span>
+                            <span id="liveHearingPillText" class="text-[#0F172A] truncate">...</span>
+                        </div>
+
+                        <div id="transceiverStatusText" class="absolute top-2 left-2 text-[10px] font-mono text-[#94A3B8]">
+                            VOICE CHANNEL // STATUS: READY
+                        </div>
+                    </div>
+
+                    <!-- Clean PTT Control & Manual Command Input -->
+                    <div class="flex flex-col space-y-1.5">
+                        <div class="flex items-center gap-2">
+                            <button id="pttButton" class="btn-ptt flex-1">
+                                <i class="fa-solid fa-microphone text-white" id="pttIcon"></i>
+                                <span id="pttLabelText">PUSH TO SPEAK</span>
+                            </button>
+                            <button id="flushBargeInBtn" class="btn-secondary bg-[#FEF2F2] text-[#DC2626] border-[#FECACA] hover:bg-[#FEE2E2]">
+                                <i class="fa-solid fa-hand"></i> BARGE-IN / FLUSH
+                            </button>
+                        </div>
+                        <div class="text-[10px] text-[#64748B] text-center font-medium">
+                            Press and hold to speak (or hold Spacebar)
+                        </div>
+                    </div>
+
+                    <!-- Live Heard & Interpreted Speech Display -->
+                    <div id="heardSpeechContainer" class="bg-[#EFF6FF] border border-[#BFDBFE] rounded px-3 py-2 text-xs text-[#1E40AF] font-sans flex flex-col space-y-1 hidden">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-[10px] uppercase font-mono tracking-wider text-[#2563EB]">HEARD:</span>
+                                <span id="heardSpeechText" class="font-medium text-[#475569]">""</span>
+                            </div>
+                            <span id="voiceConfidenceBadge" class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#DBEAFE] text-[#1E40AF] font-bold">VOICE CONFIDENCE: HIGH</span>
+                        </div>
+                        <div class="flex items-center gap-2 border-t border-[#BFDBFE]/60 pt-1">
+                            <span class="font-bold text-[10px] uppercase font-mono tracking-wider text-[#16A34A]">INTERPRETED:</span>
+                            <span id="interpretedSpeechText" class="font-semibold text-[#0F172A]">""</span>
+                        </div>
+                    </div>
+
+                    <!-- Clean Command Input Box -->
+                    <div class="flex items-center gap-2">
+                        <input id="tacticalCommandInput" type="text" placeholder="Transmit clinical command or interrupt order (e.g. 'Dose 0.3mg epi', 'Cancel query, find beds')..." class="flex-1 bg-[#FFFFFF] border border-[#CBD5E1] focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] rounded px-3 py-2 text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none font-sans shadow-xs">
+                        <button id="transmitCommandBtn" class="btn-primary-action text-xs py-2 px-4">
+                            TRANSMIT
+                        </button>
+                    </div>
+
+                    <!-- RIME Neural TTS Telemetry HUD -->
+                    <div class="bg-[#F8FAFC] p-2 rounded border border-[#E2E8F0] text-xs font-mono">
+                        <div class="flex items-center justify-between text-[11px] text-[#64748B] pb-1 border-b border-[#E2E8F0]">
+                            <span class="text-[#2563EB] font-semibold">VOICE TELEMETRY & ENGINE</span>
+                            <span class="text-[#16A34A]">24kHz PCM WAV STREAMING</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 text-center text-[10px] pt-1">
+                            <div>
+                                <span class="text-[#64748B] block">MODEL</span>
+                                <span class="text-[#0F172A] font-semibold" id="hudModel">mist</span>
+                            </div>
+                            <div>
+                                <span class="text-[#64748B] block">SPEAKER</span>
+                                <span class="text-[#0F172A] font-semibold" id="hudSpeaker">cora</span>
+                            </div>
+                            <div>
+                                <span class="text-[#64748B] block">RIME TTFB</span>
+                                <span class="text-[#16A34A] font-semibold" id="telemetryTTFB">-- ms</span>
+                            </div>
+                            <div>
+                                <span class="text-[#64748B] block">TRANSPORT</span>
+                                <span class="text-[#2563EB] font-semibold" id="hudProvider">Rime Neural API</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONVERSATION STATE GRAPH PANEL -->
+            <div class="ws-panel">
+                <div class="ws-panel-header">
+                    <span>CONVERSATION STATE GRAPH</span>
+                    <span id="activeTurnBadge" class="text-[11px] text-[#2563EB] font-mono">TURN #0</span>
+                </div>
+
+                <div class="p-3 space-y-2">
+                    <div class="grid grid-cols-3 md:grid-cols-5 gap-1.5" id="stateGraphNodes">
+                        <div class="state-node active" id="node-IDLE">IDLE</div>
+                        <div class="state-node" id="node-LISTENING">LISTENING</div>
+                        <div class="state-node" id="node-PROCESSING">PROCESSING</div>
+                        <div class="state-node" id="node-TOOL_RUNNING">TOOL RUNNING</div>
+                        <div class="state-node" id="node-SPEAKING">SPEAKING</div>
+                        <div class="state-node" id="node-INTERRUPTED">INTERRUPTED</div>
+                        <div class="state-node" id="node-CANCELLED">CANCELLED</div>
+                        <div class="state-node" id="node-STALE_RESULT_BLOCKED">STALE BLOCKED</div>
+                        <div class="state-node" id="node-COMPLETED">COMPLETED</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VOICE LATENCY TIMELINE -->
+            <div class="ws-panel">
+                <div class="ws-panel-header">
+                    <span>VOICE LATENCY TIMELINE</span>
+                    <span class="text-[#64748B] text-[10px] font-mono">LIVE MEASURED</span>
+                </div>
+
+                <div class="p-3 space-y-2 text-xs">
+                    <div class="flex items-center justify-between text-[10px] text-[#64748B] font-mono">
+                        <span>USER SPEECH</span>
+                        <span>→ STT (~120ms)</span>
+                        <span>→ ORCHESTRATION (&lt;2ms)</span>
+                        <span>→ TOOL</span>
+                        <span>→ RIME TTFB</span>
+                        <span>→ AUDIO</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-2 text-center font-mono">
+                        <div class="bg-[#F8FAFC] p-2 rounded border border-[#E2E8F0]">
+                            <div class="text-[9px] text-[#64748B]">AUDIO FLUSH TIME</div>
+                            <div class="text-xs font-bold text-[#16A34A] mt-0.5" id="telemetryFlush">&lt; 3.8 ms</div>
+                        </div>
+                        <div class="bg-[#F8FAFC] p-2 rounded border border-[#E2E8F0]">
+                            <div class="text-[9px] text-[#64748B]">REQUEST VERSION</div>
+                            <div class="text-xs font-bold text-[#2563EB] mt-0.5" id="telemetryTurn">#0</div>
+                        </div>
+                        <div class="bg-[#F8FAFC] p-2 rounded border border-[#E2E8F0]">
+                            <div class="text-[9px] text-[#64748B]">ASYNC TOOL TIME</div>
+                            <div class="text-xs font-bold text-[#D97706] mt-0.5" id="telemetryTool">-- ms</div>
+                        </div>
+                        <div class="bg-[#F8FAFC] p-2 rounded border border-[#E2E8F0]">
+                            <div class="text-[9px] text-[#64748B]">TURN LATENCY</div>
+                            <div class="text-xs font-bold text-[#0F172A] mt-0.5" id="telemetryTotal">-- ms</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSCRIPT LOG WITH "INTENDED VS HEARD" -->
+            <div class="ws-panel flex flex-col h-64">
+                <div class="ws-panel-header">
+                    <span>TRANSCRIPT LOG // HEARD VS INTENDED</span>
+                    <span id="turnCounterBadge" class="text-[10px] text-[#64748B] font-mono">0 TURNS</span>
+                </div>
+                
+                <div id="radioTranscriptFeed" class="flex-1 overflow-y-auto p-2.5 space-y-2 text-xs">
+                    <div class="p-2 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A]">
+                        <div class="flex items-center justify-between text-[10px] text-[#64748B] font-mono mb-0.5">
+                            <span>[00:00:01] SYSTEM</span>
+                            <span class="text-[#16A34A]">FENCE READY</span>
+                        </div>
+                        <p class="text-xs">Tactical voice channel active on Incident <b class="font-mono text-[#2563EB]">MED-7829</b>. Full-duplex interruption fencing and stale result firewall online.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: Stress Lab & Clinical Tools (Cols 9-12) -->
+        <div class="lg:col-span-4 space-y-3">
+            <div class="ws-panel">
+                <div class="flex border-b border-[#E2E8F0] bg-[#F1F5F9]">
+                    <button class="ws-tab-btn active" data-target="tabStress">
+                        STRESS LAB
+                    </button>
+                    <button class="ws-tab-btn" data-target="tabDosage">
+                        DOSAGE
+                    </button>
+                    <button class="ws-tab-btn" data-target="tabHospital">
+                        HOSPITALS
+                    </button>
+                    <button class="ws-tab-btn" data-target="tabFleet">
+                        FLEET
+                    </button>
+                </div>
+
+                <!-- TAB 1: VOICE STRESS LAB -->
+                <div id="tabStress" class="tab-pane p-3.5 space-y-3">
+                    <div class="text-xs font-semibold text-[#D97706] flex items-center justify-between">
+                        <span>VOICE STRESS & BENCHMARK LAB</span>
+                        <span class="text-[#64748B] font-mono text-[10px]">REPRODUCIBLE SCENARIO</span>
+                    </div>
+
+                    <div class="space-y-2 text-xs bg-[#F8FAFC] p-2.5 rounded border border-[#E2E8F0]">
+                        <div>
+                            <label class="text-[10px] text-[#64748B] font-semibold block mb-1">SYNTHETIC TOOL DELAY</label>
+                            <div class="grid grid-cols-4 gap-1.5 font-mono" id="delayOptionsBtns">
+                                <button class="delay-option-btn text-[10px] p-1 bg-[#FFFFFF] border border-[#CBD5E1] text-[#0F172A] rounded font-semibold" data-delay="0.5">0.5s</button>
+                                <button class="delay-option-btn text-[10px] p-1 bg-[#FFFFFF] border border-[#CBD5E1] text-[#0F172A] rounded font-semibold" data-delay="1.0">1.0s</button>
+                                <button class="delay-option-btn text-[10px] p-1 bg-[#FFFFFF] border border-[#CBD5E1] text-[#0F172A] rounded font-semibold" data-delay="2.0">2.0s</button>
+                                <button class="delay-option-btn text-[10px] p-1 bg-[#EFF6FF] border border-[#2563EB] text-[#2563EB] rounded font-semibold active" data-delay="3.5">3.5s</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-[10px] text-[#64748B] font-semibold block mb-1">STRESS SCENARIO</label>
+                            <select id="stressScenarioSelect" class="w-full bg-[#FFFFFF] text-[#0F172A] border border-[#CBD5E1] rounded p-1.5 text-xs font-mono">
+                                <option value="barge_in_tool">Interrupt During Tool Call (Hospital Query -> Epi Dose)</option>
+                                <option value="barge_in_speech">Interrupt During Rime Speech (Audio Flush Test)</option>
+                                <option value="rapid_interrupt">Rapid 3x Consecutive Interruption Spike</option>
+                                <option value="constraint_change">Constraint Shift Mid-Task (Pediatric 18kg -> Adult 70kg)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="runStressTestBenchmarkBtn" class="btn-primary-action w-full py-2 justify-center bg-[#2563EB] border-[#2563EB] hover:bg-[#1D4ED8]">
+                        <i class="fa-solid fa-play"></i> RUN BENCHMARK
+                    </button>
+
+                    <!-- BASELINE COMPARISON TABLE -->
+                    <div class="bg-[#F8FAFC] border border-[#E2E8F0] p-2.5 rounded text-[11px] space-y-2">
+                        <div class="text-[#64748B] font-semibold flex justify-between border-b border-[#E2E8F0] pb-1 text-[10px]">
+                            <span>BASELINE METRICS</span>
+                            <span class="text-[#2563EB]">MEASURED RESULTS</span>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-1 text-center font-semibold font-mono text-[10px]">
+                            <div class="text-[#64748B] text-left font-sans">METRIC</div>
+                            <div class="text-[#DC2626] bg-[#FEF2F2] p-1 rounded border border-[#FECACA]">NAIVE AGENT</div>
+                            <div class="text-[#16A34A] bg-[#F0FDF4] p-1 rounded border border-[#BBF7D0]">RESONANCE</div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-1 text-[10px] font-mono border-t border-[#E2E8F0] pt-1">
+                            <div class="text-[#64748B] text-left font-sans">Stale Spoken</div>
+                            <div class="text-[#DC2626] text-center font-bold" id="metricNaiveSpoken">1 (FAILED)</div>
+                            <div class="text-[#16A34A] text-center font-bold" id="metricResonanceSpoken">0 (BLOCKED)</div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1 text-[10px] font-mono">
+                            <div class="text-[#64748B] text-left font-sans">Recovery Rate</div>
+                            <div class="text-[#DC2626] text-center font-bold" id="metricNaiveRecovery">0%</div>
+                            <div class="text-[#16A34A] text-center font-bold" id="metricResonanceRecovery">100%</div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1 text-[10px] font-mono">
+                            <div class="text-[#64748B] text-left font-sans">Flush Latency</div>
+                            <div class="text-[#DC2626] text-center font-bold" id="metricNaiveFlush">N/A</div>
+                            <div class="text-[#16A34A] text-center font-bold" id="metricResonanceFlush">&lt; 3.8 ms</div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1 text-[10px] font-mono">
+                            <div class="text-[#64748B] text-left font-sans">Consistency</div>
+                            <div class="text-[#DC2626] text-center font-bold" id="metricNaiveState">CORRUPTED</div>
+                            <div class="text-[#16A34A] text-center font-bold" id="metricResonanceState">CORRECT</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#FFFFFF] border border-[#E2E8F0] p-2.5 rounded text-[10px] font-mono space-y-1">
+                        <div>STEP 1: <span id="stressStep1" class="text-[#64748B]">STANDBY</span></div>
+                        <div>STEP 2: <span id="stressStep2" class="text-[#64748B]">STANDBY</span></div>
+                        <div>STEP 3: <span id="stressStep3" class="text-[#64748B]">STANDBY</span></div>
+                        <div>VERDICT: <span id="stressFinalResult" class="text-[#64748B]">READY</span></div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Emergency Dosage Calculator -->
+                <div id="tabDosage" class="tab-pane p-3.5 space-y-3 hidden">
+                    <div class="text-xs text-[#0F172A] font-semibold flex justify-between">
+                        <span>EMERGENCY DOSAGE CALCULATOR</span>
+                        <span class="text-[#D97706] font-mono text-[10px]">WEIGHT PROTOCOL</span>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] text-[#64748B] block mb-1 font-semibold">SELECT MEDICATION</label>
+                        <select id="toolDrugSelect" class="w-full bg-[#FFFFFF] text-[#0F172A] border border-[#CBD5E1] rounded p-1.5 text-xs font-sans shadow-xs">
+                            <option value="epinephrine">Epinephrine (Anaphylaxis 1:1,000 / Arrest 1:10,000)</option>
+                            <option value="amiodarone">Amiodarone (V-Tach / V-Fib)</option>
+                            <option value="fentanyl">Fentanyl Citrate (Severe Pain / Trauma)</option>
+                            <option value="naloxone">Naloxone Narcan (Opioid Reversal)</option>
+                            <option value="atropine">Atropine Sulfate (Symptomatic Bradycardia)</option>
+                            <option value="midazolam">Midazolam Versed (Status Epilepticus)</option>
+                            <option value="ketamine">Ketamine HCl (RSI / Dissociative Analgesia)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1 text-xs">
+                            <span class="text-[#64748B]">PATIENT WEIGHT</span>
+                            <span id="toolWeightValue" class="font-bold text-[#0F172A] font-mono">18.0 KG</span>
+                        </div>
+                        <input id="toolWeightSlider" type="range" min="3" max="130" step="1" value="18" class="w-full accent-[#2563EB] cursor-pointer">
+                    </div>
+
+                    <div class="bg-[#F0FDF4] border border-[#BBF7D0] rounded p-2.5 space-y-1">
+                        <div class="text-[9px] text-[#16A34A] font-mono font-semibold">CALCULATED DOSE & ROUTE</div>
+                        <div id="calculatedDoseText" class="text-xs font-bold text-[#16A34A] font-mono">0.18 mg IM (Anterolateral Thigh)</div>
+                        <div id="calculatedDilutionText" class="text-[11px] text-[#64748B]">Dilution: 1 mg in 1 mL (1:1,000) • Volume: 0.18 mL</div>
+                    </div>
+
+                    <button id="speakDosageOrderBtn" class="btn-primary-action w-full py-2 justify-center bg-[#16A34A] border-[#16A34A] hover:bg-[#15803D]">
+                        <i class="fa-solid fa-volume-high"></i> TRANSMIT VIA RIME
+                    </button>
+                </div>
+
+                <!-- TAB 3: Hospital Bed Diversion Radar -->
+                <div id="tabHospital" class="tab-pane p-3.5 space-y-3 hidden">
+                    <div class="flex items-center justify-between text-xs text-[#0F172A] font-semibold">
+                        <span>REGIONAL TRAUMA BEDS</span>
+                        <span class="text-[#16A34A] font-mono text-[10px]">RADAR ACTIVE</span>
+                    </div>
+
+                    <div class="space-y-2 max-h-64 overflow-y-auto" id="hospitalsListContainer"></div>
+
+                    <button id="queryHospitalRadarBtn" class="btn-secondary w-full py-1.5 justify-center">
+                        <i class="fa-solid fa-radar text-[#2563EB]"></i> QUERY REGIONAL BEDS
+                    </button>
+                </div>
+
+                <!-- TAB 4: Dispatched Fleet Console -->
+                <div id="tabFleet" class="tab-pane p-3.5 space-y-3 hidden">
+                    <div class="flex items-center justify-between text-xs text-[#0F172A] font-semibold">
+                        <span>DISPATCHED FLEET MANIFEST</span>
+                        <span class="text-[#64748B] font-mono text-[10px]">GPS TRACKING</span>
+                    </div>
+
+                    <div class="space-y-2 max-h-60 overflow-y-auto" id="fleetListContainer"></div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-1 border-t border-[#E2E8F0] text-xs">
+                        <button class="dispatch-unit-quick btn-secondary justify-center text-[10px]" data-unit="Air Evac Medevac Helicopter">
+                            🚁 AIR MEDEVAC
+                        </button>
+                        <button class="dispatch-unit-quick btn-secondary justify-center text-[10px]" data-unit="Heavy Extrication Rescue Squad">
+                            🚒 RESCUE SQUAD
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Voice Presets -->
+            <div class="ws-panel p-3 space-y-2">
+                <div class="text-[11px] font-semibold text-[#64748B] flex items-center justify-between">
+                    <span>ONE-TOUCH VOICE PRESETS</span>
+                    <span class="text-[#2563EB] font-mono text-[10px]">CLICK TO TRANSMIT</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-1.5 text-xs">
+                    <button class="quick-tactical-order btn-secondary text-left text-[11px] py-1.5 justify-start" data-text="Calculate weight-based epinephrine dosage immediately for this patient">
+                        💉 Dose Epinephrine
+                    </button>
+                    <button class="quick-tactical-order btn-secondary text-left text-[11px] py-1.5 justify-start" data-text="Find nearest Level 1 trauma center with burn beds">
+                        🏥 Level 1 Trauma
+                    </button>
+                    <button class="quick-tactical-order btn-secondary text-left text-[11px] py-1.5 justify-start" data-text="Log vitals: blood pressure 82/50, heart rate 138, SpO2 91%, GCS 12">
+                        📊 Log Trauma Vitals
+                    </button>
+                    <button class="quick-tactical-order btn-secondary text-left text-[11px] py-1.5 justify-start" data-text="Dispatch Air Evac Medevac helicopter priority Code 3">
+                        🚁 Air Medevac
+                    </button>
+                    <button class="quick-tactical-order btn-secondary text-left text-[11px] py-1.5 justify-start" data-text="Calculate 300 milligrams amiodarone for persistent ventricular fibrillation">
+                        ⚡ Dose Amiodarone
+                    </button>
+                    <button class="quick-tactical-order btn-secondary text-left text-[11px] py-1.5 justify-start" data-text="Administer naloxone narcan 2 milligrams intranasally">
+                        💊 Dose Narcan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Vitals Manual Editor -->
+    <div id="vitalsModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 font-sans">
+        <div class="bg-[#FFFFFF] border border-[#CBD5E1] rounded-lg max-w-sm w-full p-4 space-y-3 shadow-xl">
+            <div class="flex justify-between items-center border-b border-[#E2E8F0] pb-2">
+                <span class="text-xs font-semibold text-[#0F172A]">UPDATE PATIENT VITALS</span>
+                <button id="closeVitalsModalBtn" class="text-[#64748B] hover:text-[#0F172A]"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-2 text-xs">
+                <div>
+                    <label class="text-[10px] text-[#64748B] font-semibold block mb-0.5">HEART RATE (BPM)</label>
+                    <input id="inputEditHR" type="number" value="142" class="w-full bg-[#F8FAFC] border border-[#CBD5E1] p-1.5 rounded text-[#0F172A] font-mono">
+                </div>
+                <div>
+                    <label class="text-[10px] text-[#64748B] font-semibold block mb-0.5">BLOOD PRESSURE (mmHg)</label>
+                    <input id="inputEditBP" type="text" value="78/48" class="w-full bg-[#F8FAFC] border border-[#CBD5E1] p-1.5 rounded text-[#0F172A] font-mono">
+                </div>
+                <div>
+                    <label class="text-[10px] text-[#64748B] font-semibold block mb-0.5">OXYGEN SATURATION (SpO2 %)</label>
+                    <input id="inputEditSpO2" type="number" value="89" class="w-full bg-[#F8FAFC] border border-[#CBD5E1] p-1.5 rounded text-[#0F172A] font-mono">
+                </div>
+                <div>
+                    <label class="text-[10px] text-[#64748B] font-semibold block mb-0.5">GLASGOW COMA SCALE (GCS / 15)</label>
+                    <input id="inputEditGCS" type="number" value="13" class="w-full bg-[#F8FAFC] border border-[#CBD5E1] p-1.5 rounded text-[#0F172A] font-mono">
+                </div>
+            </div>
+            <button id="saveVitalsModalBtn" class="btn-primary-action w-full py-1.5 justify-center">
+                SAVE & SYNC TELEMETRY
+            </button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

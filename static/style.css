@@ -1,0 +1,354 @@
+/* ==========================================================================
+   PULSE DISPATCH // Emergency Incident Copilot & Operations Console
+   Subtle, Professional, Medical-Grade Interface Architecture
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg-app: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    --bg-surface-alt: #F1F5F9;
+    --bg-surface-active: #E2E8F0;
+    --border-color: #E2E8F0;
+    --border-color-dark: #CBD5E1;
+    
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #94A3B8;
+    
+    --accent-blue: #2563EB;
+    --accent-blue-hover: #1D4ED8;
+    --accent-blue-light: #EFF6FF;
+    --accent-blue-border: #BFDBFE;
+
+    --status-success: #16A34A;
+    --status-success-bg: #F0FDF4;
+    --status-success-border: #BBF7D0;
+
+    --status-warning: #D97706;
+    --status-warning-bg: #FFFBEB;
+    --status-warning-border: #FDE68A;
+
+    --status-critical: #DC2626;
+    --status-critical-bg: #FEF2F2;
+    --status-critical-border: #FECACA;
+    
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-tech: 'JetBrains Mono', Consolas, monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-size: 13px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Typography Utility Classes */
+.font-sans {
+    font-family: var(--font-primary) !important;
+}
+
+.font-mono {
+    font-family: var(--font-tech) !important;
+}
+
+/* Workstation Panels */
+.ws-panel {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+}
+
+.ws-panel-header {
+    background-color: var(--bg-surface-alt);
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.ws-panel-hero {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+
+.ws-panel-hero .ws-panel-header {
+    background-color: var(--bg-surface-alt);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Incident Selector Tabs */
+.incident-tab-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: var(--font-primary);
+    text-align: left;
+    border-radius: 4px 4px 0 0;
+}
+
+.incident-tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-alt);
+}
+
+.incident-tab-btn.active {
+    color: var(--accent-blue);
+    background: var(--bg-surface);
+    border-bottom: 2px solid var(--accent-blue);
+    font-weight: 600;
+}
+
+/* Tab Navigation */
+.ws-tab-btn {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-surface-alt);
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-right: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: var(--font-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.ws-tab-btn:last-child {
+    border-right: none;
+}
+
+.ws-tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.ws-tab-btn.active {
+    color: var(--accent-blue);
+    background: var(--bg-surface);
+    border-bottom: 2px solid var(--accent-blue);
+}
+
+/* Primary Button */
+.btn-primary-action {
+    background-color: var(--accent-blue);
+    color: #ffffff;
+    border: 1px solid var(--accent-blue);
+    border-radius: 5px;
+    padding: 6px 14px;
+    font-family: var(--font-primary);
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary-action:hover {
+    background-color: var(--accent-blue-hover);
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+}
+
+/* Secondary Button */
+.btn-secondary {
+    background-color: #FFFFFF;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color-dark);
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-family: var(--font-primary);
+    font-weight: 500;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-secondary:hover {
+    background-color: var(--bg-surface-alt);
+    border-color: #94A3B8;
+}
+
+/* PTT Button */
+.btn-ptt {
+    width: 100%;
+    padding: 10px 14px;
+    background-color: var(--accent-blue);
+    border: 1px solid var(--accent-blue);
+    border-radius: 5px;
+    color: #FFFFFF;
+    font-family: var(--font-primary);
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.25);
+}
+
+.btn-ptt:hover {
+    background-color: var(--accent-blue-hover);
+}
+
+.btn-ptt.transmitting {
+    background-color: var(--status-critical) !important;
+    border-color: var(--status-critical) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(220, 38, 38, 0.3) !important;
+}
+
+/* State Graph Node Styles */
+.state-node {
+    padding: 6px 4px;
+    border-radius: 4px;
+    background: var(--bg-surface-alt);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-family: var(--font-tech);
+    font-weight: 600;
+    font-size: 10px;
+    text-align: center;
+    transition: all 0.15s ease;
+}
+
+.state-node.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #ffffff;
+}
+
+.state-node.interrupted {
+    background: var(--status-critical);
+    border-color: var(--status-critical);
+    color: #ffffff;
+}
+
+.state-node.stale-blocked {
+    background: var(--status-warning);
+    border-color: var(--status-warning);
+    color: #ffffff;
+}
+
+/* Core Process Indicator (Signature Feature) */
+.process-flow-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-family: var(--font-tech);
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.process-flow-badge .sig-step {
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: var(--font-tech);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.process-flow-badge .sig-step.active-interrupt {
+    background: var(--status-critical-bg);
+    border: 1px solid var(--status-critical);
+    color: var(--status-critical);
+}
+
+.process-flow-badge .sig-step.active-flush {
+    background: var(--status-warning-bg);
+    border: 1px solid var(--status-warning);
+    color: var(--status-warning);
+}
+
+.process-flow-badge .sig-step.active-fence {
+    background: var(--accent-blue-light);
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+}
+
+.process-flow-badge .sig-step.active-recover {
+    background: var(--status-success-bg);
+    border: 1px solid var(--status-success);
+    color: var(--status-success);
+    font-weight: 700;
+}
+
+.process-flow-badge .arrow {
+    color: var(--text-muted);
+    font-size: 9px;
+}
+
+/* Data Row Alignment */
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.data-row:last-child {
+    border-bottom: none;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color-dark);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
