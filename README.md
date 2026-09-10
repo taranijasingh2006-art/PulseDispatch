@@ -10,7 +10,7 @@ Built for **DataForge .pathway x Rime Hackathon Challenge** (Problem Statement 2
 
 ---
 
-## ?? 1. Problem & Necessity of Voice
+## 1. Problem & Necessity of Voice
 In fast-paced emergency medical response, trauma surgery, and field rescue:
 - Responders have **gloved, contaminated, or busy hands** while performing CPR, airway management, or patient extrication.
 - Looking down at a tablet or typing on a screen creates cognitive load and dangerous delays.
@@ -18,7 +18,7 @@ In fast-paced emergency medical response, trauma surgery, and field rescue:
 
 ---
 
-## ? 2. Hard Voice Engineering Challenges Solved
+## 2. Hard Voice Engineering Challenges Solved
 
 ### A. Instant Interruption & Barge-In Fencing (< 5ms)
 - When a clinician interrupts during speech or tool execution, the client WebAudio buffer is instantly flushed.
@@ -37,7 +37,7 @@ In fast-paced emergency medical response, trauma surgery, and field rescue:
 
 ---
 
-## ??? 3. Exact Rime Neural TTS Configuration
+## 3. Exact Rime Neural TTS Configuration
 
 | Parameter | Configuration / Value | Description |
 |---|---|---|
@@ -53,7 +53,7 @@ In fast-paced emergency medical response, trauma surgery, and field rescue:
 
 ---
 
-## ??? 4. Architecture
+## 4. Architecture
 
 ```mermaid
 flowchart TD
@@ -87,7 +87,7 @@ flowchart TD
 
 ---
 
-## ?? 5. Quickstart & Installation
+## 5. Quickstart & Installation
 
 ### Prerequisites
 - Python 3.10+
@@ -123,7 +123,7 @@ Open your browser at: **`http://localhost:8000`**
 
 ---
 
-## ?? 6. Reproducing Acceptance Tests & Benchmarks
+## 6. Reproducing Acceptance Tests & Benchmarks
 
 Run the test suite:
 ```bash
@@ -143,7 +143,7 @@ pytest -v
 
 ---
 
-## ??? 7. Third-Party Services & Fallback Behavior
+## 7. Third-Party Services & Fallback Behavior
 - **Rime TTS**: Primary neural speech synthesis provider.
 - **Web Speech API**: Browser-native speech recognition for hands-free command input.
 - **Fallback Audio Engine**: Fully disclosed local resonant synthesis engine that ensures 100% test reproducibility and zero-downtime offline execution. The active provider is always visibly badged in the UI and WebSocket telemetry payload (`RIME_TTS` vs `FALLBACK_SYNTHESIZER`).
