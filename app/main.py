@@ -7,6 +7,7 @@ Interruption Fencing, and Live Mission Control Telemetry HUD.
 import json
 import base64
 import asyncio
+from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -295,7 +296,8 @@ async def websocket_voice_endpoint(websocket: WebSocket):
         print(f"[WS ERROR] {e}")
 
 # Mount static frontend
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
