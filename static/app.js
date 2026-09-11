@@ -863,7 +863,7 @@ class TacticalApp {
                     hudProvider.className = meta.is_fallback ? "text-[#D97706] font-bold font-mono" : "text-[#16A34A] font-bold font-mono";
                 }
 
-                if (msg.audio) {
+                if (msg.audio && !meta.is_fallback) {
                     this.voiceEngine.playBase64Audio(msg.audio, meta.turn_id,
                         () => this.setConversationState("SPEAKING"),
                         () => {
@@ -1796,7 +1796,19 @@ class TacticalApp {
                 }
             }
         });
+        // CPR Metronome Toggle
+        if (this.cprMetronomeBtn) {
+            this.cprMetronomeBtn.addEventListener("click", () => {
+                const active = this.voiceEngine.soundFX.toggleCprMetronome();
 
+                if (this.cprStatusText) {
+                    this.cprStatusText.textContent = active ? "ON" : "OFF";
+                    this.cprStatusText.className = active
+                        ? "text-[#16A34A] font-bold"
+                        : "text-[#64748B]";
+                }
+            });
+        }
         // Audio Mute / Toggle Button
         if (this.audioMuteToggleBtn) {
             this.audioMuteToggleBtn.addEventListener("click", () => {
