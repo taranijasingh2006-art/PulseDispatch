@@ -36,7 +36,7 @@ class SoundFX {
             gain.connect(this.ctx.destination);
             osc.start(now);
             osc.stop(now + 0.1);
-        } catch (e) {}
+        } catch (e) { }
     }
 
     playFlushClick() {
@@ -54,7 +54,7 @@ class SoundFX {
             gain.connect(this.ctx.destination);
             osc.start(now);
             osc.stop(now + 0.06);
-        } catch (e) {}
+        } catch (e) { }
     }
 
     toggleCprMetronome(onTick) {
@@ -79,7 +79,7 @@ class SoundFX {
                     osc.start(now);
                     osc.stop(now + 0.035);
                     if (onTick) onTick();
-                } catch (e) {}
+                } catch (e) { }
             }, 545);
             return true;
         }
@@ -94,7 +94,7 @@ class SpeechVoiceEngine {
         this.soundEnabled = true;
         this.currentAudioElement = null;
         this.currentAudioUrl = null;
-        
+
         if ("speechSynthesis" in window) {
             window.speechSynthesis.onvoiceschanged = () => {
                 const voices = window.speechSynthesis.getVoices();
@@ -166,12 +166,12 @@ class SpeechVoiceEngine {
             try {
                 this.currentAudioElement.pause();
                 this.currentAudioElement.currentTime = 0;
-            } catch (e) {}
+            } catch (e) { }
             this.currentAudioElement = null;
         }
 
         if (this.currentAudioUrl) {
-            try { URL.revokeObjectURL(this.currentAudioUrl); } catch (e) {}
+            try { URL.revokeObjectURL(this.currentAudioUrl); } catch (e) { }
             this.currentAudioUrl = null;
         }
 
@@ -460,7 +460,7 @@ class TacticalApp {
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     const resultObj = event.results[i];
                     const norm = this.normalizeAndSelectTranscript(resultObj);
-                    
+
                     this.currentRawHeard = norm.raw;
                     this.currentInterpreted = norm.interpreted;
 
@@ -481,7 +481,7 @@ class TacticalApp {
                         this.interpretedSpeechText.textContent = norm.confidence === "LOW_CONFIRM" ? `"Please confirm: Did you say ${norm.raw}?"` : `"${norm.interpreted}"`;
                         if (this.voiceConfidenceBadge) {
                             this.voiceConfidenceBadge.textContent = `VOICE CONFIDENCE: ${norm.confidence}`;
-                            this.voiceConfidenceBadge.className = norm.confidence === "HIGH" 
+                            this.voiceConfidenceBadge.className = norm.confidence === "HIGH"
                                 ? "text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#DBEAFE] text-[#1E40AF] font-bold"
                                 : (norm.confidence === "LOW_CONFIRM"
                                     ? "text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#FEF2F2] text-[#DC2626] font-bold"
@@ -599,7 +599,7 @@ class TacticalApp {
             if (data.dispatched_units) this.renderFleet(data.dispatched_units);
             if (data.mode) this.setAgentMode(data.mode);
             if (data.current_state) this.setConversationState(data.current_state);
-        } catch (e) {}
+        } catch (e) { }
     }
 
     initWebSocket() {
@@ -619,7 +619,7 @@ class TacticalApp {
             try {
                 const msg = JSON.parse(event.data);
                 this.handleWsMessage(msg);
-            } catch (e) {}
+            } catch (e) { }
         };
 
         this.ws.onclose = () => {
@@ -851,7 +851,7 @@ class TacticalApp {
                     this.telemetryTurn.textContent = `#${meta.turn_id}`;
                     if (this.activeTurnBadge) this.activeTurnBadge.textContent = `TURN #${meta.turn_id}`;
                 }
-                
+
                 const hudModel = document.getElementById("hudModel");
                 const hudSpeaker = document.getElementById("hudSpeaker");
                 const hudProvider = document.getElementById("hudProvider");
@@ -861,9 +861,9 @@ class TacticalApp {
                     hudProvider.textContent = meta.is_fallback ? "Fallback Synthesizer" : "Rime Neural API";
                     hudProvider.className = meta.is_fallback ? "text-[#D97706] font-bold font-mono" : "text-[#16A34A] font-bold font-mono";
                 }
-                
+
                 if (msg.audio) {
-                    this.voiceEngine.playBase64Audio(msg.audio, meta.turn_id, 
+                    this.voiceEngine.playBase64Audio(msg.audio, meta.turn_id,
                         () => this.setConversationState("SPEAKING"),
                         () => {
                             if (meta.turn_id === this.activeTurnId) {
@@ -1010,10 +1010,10 @@ class TacticalApp {
         hospitals.forEach(h => {
             const card = document.createElement("div");
             const divertClass = h.divert ? "border-[#FECACA] bg-[#FEF2F2]" : "border-[#E2E8F0] bg-[#FFFFFF]";
-            const badge = h.divert 
+            const badge = h.divert
                 ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#DC2626] text-white font-bold border border-[#DC2626] font-mono">DIVERT</span>`
                 : `<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#F0FDF4] text-[#16A34A] font-bold border border-[#BBF7D0] font-mono">ACCEPTING</span>`;
-            
+
             card.className = `border ${divertClass} p-2.5 rounded text-xs space-y-1 font-mono shadow-xs`;
             card.innerHTML = `
                 <div class="flex items-center justify-between font-bold">
@@ -1316,7 +1316,7 @@ class TacticalApp {
             this.isListening = false;
             this.stopMicAudioContext();
             if (this.recognition) {
-                try { this.recognition.stop(); } catch (e) {}
+                try { this.recognition.stop(); } catch (e) { }
             }
         }
 
@@ -1349,669 +1349,679 @@ class TacticalApp {
                 model_id: this.modelSelect.value
             }));
         }
+        // Only use the local response fallback when WebSocket backend is NOT connected.
+        const backendConnected = this.ws && this.ws.readyState === WebSocket.OPEN;
 
-        // Synthetic Tool Delay or Instant execution
-        const delaySec = this.selectedDelay || 0;
-        const delayMs = Math.max(150, delaySec * 1000);
+        if (!backendConnected) {
+            const delaySec = this.selectedDelay || 0;
+            const delayMs = Math.max(150, delaySec * 1000);
 
-        if (delaySec > 0) {
-            this.setConversationState("TOOL_RUNNING");
-            if (this.telemetryTool) this.telemetryTool.textContent = `${delaySec}s synthetic delay...`;
-            this.appendRadioLog("CLINICAL TOOL", `Executing async tool with ${delaySec}s synthetic delay...`, "tool");
-        }
-
-        this.localFallbackTimer = setTimeout(() => {
-            this.localFallbackTimer = null;
-
-            // STALE RESULT FIREWALL CHECK: Is this turn still the active request?
-            if (currentTurnId !== this.activeTurnId) {
-                console.warn(`[STALE FIREWALL] Turn #${currentTurnId} blocked! Active turn is #${this.activeTurnId}`);
-                this.appendFirewallLog({
-                    source: "Async Tool Pipeline",
-                    status: "BLOCKED",
-                    old_turn_id: currentTurnId,
-                    current_turn_id: this.activeTurnId,
-                    reason: `Interruption Fenced: Blocked stale output from turn #${currentTurnId}`
-                });
-                this.updateStateGraphNode("STALE_RESULT_BLOCKED");
-                return;
+            if (delaySec > 0) {
+                this.setConversationState("TOOL_RUNNING");
+                if (this.telemetryTool) {
+                    this.telemetryTool.textContent = `${delaySec}s synthetic delay...`;
+                }
+                this.appendRadioLog(
+                    "CLINICAL TOOL",
+                    `Executing async tool with ${delaySec}s synthetic delay...`,
+                    "tool"
+                );
             }
 
-            // Speak response via Centralized TTS function
-            this.speakAgentResponse(responseText, currentTurnId);
-        }, delayMs);
-    }
+            this.localFallbackTimer = setTimeout(() => {
+                this.localFallbackTimer = null;
 
-    generateResponseForCommand(text) {
-        const lower = text.toLowerCase();
-        if (lower.includes("epi") || lower.includes("epinephrine")) {
-            return "Epinephrine 0.3 milligrams IM confirmed. Timer initialized for 3-minute repeat cycle.";
-        } else if (lower.includes("vitals") || lower.includes("log")) {
-            return "Patient vitals logged into CAD manifest. ECG monitor synced.";
-        } else if (lower.includes("hospital") || lower.includes("trauma") || lower.includes("bed")) {
-            return "St. Jude Trauma Center accepting, ETA 8 minutes, 2 trauma bays open. Routing medic unit.";
-        } else if (lower.includes("fleet") || lower.includes("dispatch") || lower.includes("unit")) {
-            return "ALS Unit Medic 14 dispatched Code 3. Staging at Lincoln Cafeteria.";
-        } else if (lower.includes("narcan") || lower.includes("naloxone")) {
-            return "Naloxone Narcan 2 milligrams intranasally confirmed. Airway support initiated.";
-        } else if (lower.includes("amiodarone")) {
-            return "Amiodarone 300 milligrams IV push confirmed for persistent V-Tach.";
-        } else if (lower.includes("cancel") || lower.includes("interrupt")) {
-            return "Previous order cancelled. Standing by for immediate clinical direction.";
-        } else {
-            return `Acknowledged: "${text}". Command routed to emergency orchestrator.`;
+                if (currentTurnId !== this.activeTurnId) {
+                    console.warn(
+                        `[STALE FIREWALL] Turn #${currentTurnId} blocked! Active turn is #${this.activeTurnId}`
+                    );
+                    this.appendFirewallLog({
+                        source: "Async Tool Pipeline",
+                        status: "BLOCKED",
+                        old_turn_id: currentTurnId,
+                        current_turn_id: this.activeTurnId,
+                        reason: `Interruption Fenced: Blocked stale output from turn #${currentTurnId}`
+                    });
+                    this.updateStateGraphNode("STALE_RESULT_BLOCKED");
+                    return;
+                }
+
+                this.speakAgentResponse(responseText, currentTurnId);
+            }, delayMs);
         }
     }
+}
 
-    // --- BARGE-IN INTERRUPT & AUDIO FLUSH HANDLER ---
-    handleInterrupt() {
-        console.log("[INTERRUPT] request invalidated");
-        if ("speechSynthesis" in window) {
-            window.speechSynthesis.cancel();
-            console.log("[TTS] speech cancelled");
-        }
-
-        if (this.recoveryTimer) clearTimeout(this.recoveryTimer);
-        if (this.localFallbackTimer) {
-            clearTimeout(this.localFallbackTimer);
-            this.localFallbackTimer = null;
-        }
-
-        const cancelledTurnId = this.activeTurnId;
-        this.requestId++;
-        const newTurnId = this.requestId;
-        this.activeTurnId = newTurnId;
-        this.activeTurnUuid = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `req-${newTurnId}-${Date.now()}`;
-
-        // Immediately flush all playing audio & speech synthesis
-        const latency = this.voiceEngine.stopAll(newTurnId);
-        if (this.telemetryFlush) this.telemetryFlush.textContent = `${latency} ms`;
-
-        // Abort STT if listening
-        if (this.recognition) {
-            try { this.recognition.abort(); } catch (e) {}
-        }
-        this.stopMicAudioContext();
-        this.isListening = false;
-
-        // Send WS interrupt notification to server
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({ type: "INTERRUPT", reason: "manual_user_barge_in", new_turn_id: newTurnId }));
-        }
-
-        // 1. Enter INTERRUPTED state
-        this.setConversationState("INTERRUPTED");
-        this.appendRadioLog("BARGE-IN FENCE", `Interruption captured (#${cancelledTurnId} -> #${newTurnId}). Audio flushed in ${latency}ms.`, "flush");
-        this.appendFirewallLog({
-            source: "User Barge-In",
-            status: "BLOCKED",
-            old_turn_id: cancelledTurnId,
-            current_turn_id: newTurnId,
-            reason: `Request #${cancelledTurnId} invalidated by user interruption`
-        });
-
-        // 2. Sequential State Transition Animation (FLUSHING -> FENCED -> RECOVERING -> IDLE)
-        setTimeout(() => this.setConversationState("FLUSHING"), 150);
-        setTimeout(() => this.setConversationState("FENCED"), 350);
-        setTimeout(() => this.setConversationState("RECOVERING"), 600);
-        this.recoveryTimer = setTimeout(() => {
-            if (this.conversationState === "RECOVERING") {
-                this.setConversationState("IDLE");
-            }
-        }, 900);
+generateResponseForCommand(text) {
+    const lower = text.toLowerCase();
+    if (lower.includes("epi") || lower.includes("epinephrine")) {
+        return "Epinephrine 0.3 milligrams IM confirmed. Timer initialized for 3-minute repeat cycle.";
+    } else if (lower.includes("vitals") || lower.includes("log")) {
+        return "Patient vitals logged into CAD manifest. ECG monitor synced.";
+    } else if (lower.includes("hospital") || lower.includes("trauma") || lower.includes("bed")) {
+        return "St. Jude Trauma Center accepting, ETA 8 minutes, 2 trauma bays open. Routing medic unit.";
+    } else if (lower.includes("fleet") || lower.includes("dispatch") || lower.includes("unit")) {
+        return "ALS Unit Medic 14 dispatched Code 3. Staging at Lincoln Cafeteria.";
+    } else if (lower.includes("narcan") || lower.includes("naloxone")) {
+        return "Naloxone Narcan 2 milligrams intranasally confirmed. Airway support initiated.";
+    } else if (lower.includes("amiodarone")) {
+        return "Amiodarone 300 milligrams IV push confirmed for persistent V-Tach.";
+    } else if (lower.includes("cancel") || lower.includes("interrupt")) {
+        return "Previous order cancelled. Standing by for immediate clinical direction.";
+    } else {
+        return `Acknowledged: "${text}". Command routed to emergency orchestrator.`;
     }
+}
+
+// --- BARGE-IN INTERRUPT & AUDIO FLUSH HANDLER ---
+handleInterrupt() {
+    console.log("[INTERRUPT] request invalidated");
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        console.log("[TTS] speech cancelled");
+    }
+
+    if (this.recoveryTimer) clearTimeout(this.recoveryTimer);
+    if (this.localFallbackTimer) {
+        clearTimeout(this.localFallbackTimer);
+        this.localFallbackTimer = null;
+    }
+
+    const cancelledTurnId = this.activeTurnId;
+    this.requestId++;
+    const newTurnId = this.requestId;
+    this.activeTurnId = newTurnId;
+    this.activeTurnUuid = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `req-${newTurnId}-${Date.now()}`;
+
+    // Immediately flush all playing audio & speech synthesis
+    const latency = this.voiceEngine.stopAll(newTurnId);
+    if (this.telemetryFlush) this.telemetryFlush.textContent = `${latency} ms`;
+
+    // Abort STT if listening
+    if (this.recognition) {
+        try { this.recognition.abort(); } catch (e) { }
+    }
+    this.stopMicAudioContext();
+    this.isListening = false;
+
+    // Send WS interrupt notification to server
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: "INTERRUPT", reason: "manual_user_barge_in", new_turn_id: newTurnId }));
+    }
+
+    // 1. Enter INTERRUPTED state
+    this.setConversationState("INTERRUPTED");
+    this.appendRadioLog("BARGE-IN FENCE", `Interruption captured (#${cancelledTurnId} -> #${newTurnId}). Audio flushed in ${latency}ms.`, "flush");
+    this.appendFirewallLog({
+        source: "User Barge-In",
+        status: "BLOCKED",
+        old_turn_id: cancelledTurnId,
+        current_turn_id: newTurnId,
+        reason: `Request #${cancelledTurnId} invalidated by user interruption`
+    });
+
+    // 2. Sequential State Transition Animation (FLUSHING -> FENCED -> RECOVERING -> IDLE)
+    setTimeout(() => this.setConversationState("FLUSHING"), 150);
+    setTimeout(() => this.setConversationState("FENCED"), 350);
+    setTimeout(() => this.setConversationState("RECOVERING"), 600);
+    this.recoveryTimer = setTimeout(() => {
+        if (this.conversationState === "RECOVERING") {
+            this.setConversationState("IDLE");
+        }
+    }, 900);
+}
 
     // --- HARDWARE MICROPHONE WITH REAL AUDIO CONTEXT & VU METER ---
     async startMicAudioContext() {
-        try {
-            if (!this.audioContext) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                this.audioContext = new AudioContext();
-            }
-            if (this.audioContext.state === "suspended") {
-                await this.audioContext.resume();
-            }
-            
-            if (!this.mediaStream) {
-                this.mediaStream = await navigator.mediaDevices.getUserMedia({
-                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-                });
-            }
-
-            const source = this.audioContext.createMediaStreamSource(this.mediaStream);
-            this.analyser = this.audioContext.createAnalyser();
-            this.analyser.fftSize = 256;
-            this.analyser.smoothingTimeConstant = 0.75;
-            source.connect(this.analyser);
-            this.micDataArray = new Uint8Array(this.analyser.frequencyBinCount);
-            this.isTransmitting = true;
-
-        } catch (err) {
-            this.isTransmitting = false;
-            console.warn("[MIC AUDIO CONTEXT ERROR]", err);
+    try {
+        if (!this.audioContext) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext();
         }
-    }
+        if (this.audioContext.state === "suspended") {
+            await this.audioContext.resume();
+        }
 
-    stopMicAudioContext() {
+        if (!this.mediaStream) {
+            this.mediaStream = await navigator.mediaDevices.getUserMedia({
+                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+            });
+        }
+
+        const source = this.audioContext.createMediaStreamSource(this.mediaStream);
+        this.analyser = this.audioContext.createAnalyser();
+        this.analyser.fftSize = 256;
+        this.analyser.smoothingTimeConstant = 0.75;
+        source.connect(this.analyser);
+        this.micDataArray = new Uint8Array(this.analyser.frequencyBinCount);
+        this.isTransmitting = true;
+
+    } catch (err) {
         this.isTransmitting = false;
-        if (this.mediaStream) {
-            this.mediaStream.getTracks().forEach(t => t.stop());
-            this.mediaStream = null;
-        }
-        this.updateVUMeter(0);
+        console.warn("[MIC AUDIO CONTEXT ERROR]", err);
     }
+}
 
-    syncCanvasSize(canvas) {
-        if (!canvas || !canvas.parentElement) return;
-        const parent = canvas.parentElement;
-        const w = parent.clientWidth || 300;
-        const h = parent.clientHeight || 80;
-        if (canvas.width !== w || canvas.height !== h) {
-            canvas.width = w;
-            canvas.height = h;
-        }
+stopMicAudioContext() {
+    this.isTransmitting = false;
+    if (this.mediaStream) {
+        this.mediaStream.getTracks().forEach(t => t.stop());
+        this.mediaStream = null;
     }
+    this.updateVUMeter(0);
+}
 
-    initCanvases() {
-        // 1. Audio Waveform Oscilloscope
-        const renderOsc = () => {
-            if (this.oscCtx && this.oscilloscopeCanvas) {
-                const canvas = this.oscilloscopeCanvas;
-                const ctx = this.oscCtx;
-                this.syncCanvasSize(canvas);
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+syncCanvasSize(canvas) {
+    if (!canvas || !canvas.parentElement) return;
+    const parent = canvas.parentElement;
+    const w = parent.clientWidth || 300;
+    const h = parent.clientHeight || 80;
+    if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+    }
+}
 
-                let micLevel = 0;
-                if (this.analyser && this.isTransmitting && this.micDataArray) {
-                    this.analyser.getByteFrequencyData(this.micDataArray);
-                    let sum = 0;
-                    for (let i = 0; i < this.micDataArray.length; i++) sum += this.micDataArray[i];
-                    const avg = sum / this.micDataArray.length;
-                    micLevel = Math.min(100, Math.round((avg / 128) * 100));
-                    this.updateVUMeter(micLevel);
-                }
+initCanvases() {
+    // 1. Audio Waveform Oscilloscope
+    const renderOsc = () => {
+        if (this.oscCtx && this.oscilloscopeCanvas) {
+            const canvas = this.oscilloscopeCanvas;
+            const ctx = this.oscCtx;
+            this.syncCanvasSize(canvas);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                const slices = 80;
-                const sliceWidth = canvas.width / slices;
-                let x = 0;
-
-                const isSpeaking = this.voiceEngine.isPlaying;
-                const isTransmitting = this.isTransmitting || this.isListening;
-
-                for (let i = 0; i < slices; i++) {
-                    let amp = 0;
-                    if (isSpeaking) {
-                        amp = Math.sin(this.animPhase + i * 0.25) * 22 + Math.cos(this.animPhase * 1.8 + i * 0.1) * 12;
-                        ctx.strokeStyle = "#2563EB"; // Primary Blue for Rime Speech
-                    } else if (isTransmitting) {
-                        const freqVal = this.micDataArray ? (this.micDataArray[i % this.micDataArray.length] / 5) : 0;
-                        amp = Math.sin(this.animPhase * 0.9 + i * 0.15) * (5 + freqVal);
-                        ctx.strokeStyle = "#16A34A"; // Green for mic
-                    } else {
-                        amp = Math.sin(this.animPhase * 0.2 + i * 0.05) * 2;
-                        ctx.strokeStyle = "#334155";
-                    }
-
-                    const y = canvas.height / 2 + amp;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                    x += sliceWidth;
-                }
-                ctx.stroke();
-                this.animPhase += 0.08;
+            let micLevel = 0;
+            if (this.analyser && this.isTransmitting && this.micDataArray) {
+                this.analyser.getByteFrequencyData(this.micDataArray);
+                let sum = 0;
+                for (let i = 0; i < this.micDataArray.length; i++) sum += this.micDataArray[i];
+                const avg = sum / this.micDataArray.length;
+                micLevel = Math.min(100, Math.round((avg / 128) * 100));
+                this.updateVUMeter(micLevel);
             }
-            requestAnimationFrame(renderOsc);
-        };
-        renderOsc();
 
-        // 2. Lead II ECG Trace
-        const renderECG = () => {
-            if (this.ecgCtx && this.ecgCanvas) {
-                const canvas = this.ecgCanvas;
-                const ctx = this.ecgCtx;
-                this.syncCanvasSize(canvas);
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const slices = 80;
+            const sliceWidth = canvas.width / slices;
+            let x = 0;
 
-                ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const isSpeaking = this.voiceEngine.isPlaying;
+            const isTransmitting = this.isTransmitting || this.isListening;
 
-                ctx.strokeStyle = "#22C55E";
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-
-                const points = 120;
-                const step = canvas.width / points;
-                let x = 0;
-                const midY = canvas.height / 2;
-
-                for (let i = 0; i < points; i++) {
-                    const phase = (i + this.ecgIndex) % 40;
-                    let y = midY;
-                    if (phase === 10) y = midY - 6;
-                    else if (phase === 14) y = midY + 4;
-                    else if (phase === 16) y = midY - 24;
-                    else if (phase === 18) y = midY + 10;
-                    else if (phase === 24) y = midY - 8;
-
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                    x += step;
+            for (let i = 0; i < slices; i++) {
+                let amp = 0;
+                if (isSpeaking) {
+                    amp = Math.sin(this.animPhase + i * 0.25) * 22 + Math.cos(this.animPhase * 1.8 + i * 0.1) * 12;
+                    ctx.strokeStyle = "#2563EB"; // Primary Blue for Rime Speech
+                } else if (isTransmitting) {
+                    const freqVal = this.micDataArray ? (this.micDataArray[i % this.micDataArray.length] / 5) : 0;
+                    amp = Math.sin(this.animPhase * 0.9 + i * 0.15) * (5 + freqVal);
+                    ctx.strokeStyle = "#16A34A"; // Green for mic
+                } else {
+                    amp = Math.sin(this.animPhase * 0.2 + i * 0.05) * 2;
+                    ctx.strokeStyle = "#334155";
                 }
-                ctx.stroke();
-                this.ecgIndex = (this.ecgIndex + 1) % 40;
+
+                const y = canvas.height / 2 + amp;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                x += sliceWidth;
             }
-            setTimeout(renderECG, 50);
-        };
-        renderECG();
-    }
+            ctx.stroke();
+            this.animPhase += 0.08;
+        }
+        requestAnimationFrame(renderOsc);
+    };
+    renderOsc();
 
-    startEpiTimer() {
-        this.epiInterval = setInterval(() => {
-            if (this.epiSecondsLeft > 0) {
-                this.epiSecondsLeft--;
-                const m = Math.floor(this.epiSecondsLeft / 60);
-                const s = this.epiSecondsLeft % 60;
-                if (this.epiTimerDisplay) {
-                    this.epiTimerDisplay.textContent = `03:00 (REPEAT IN: ${m}m ${s < 10 ? "0" : ""}${s}s)`;
-                }
-            } else {
-                if (this.epiTimerDisplay) {
-                    this.epiTimerDisplay.textContent = "03:00 (ALERT: REPEAT EPINEPHRINE NOW!)";
-                }
+    // 2. Lead II ECG Trace
+    const renderECG = () => {
+        if (this.ecgCtx && this.ecgCanvas) {
+            const canvas = this.ecgCanvas;
+            const ctx = this.ecgCtx;
+            this.syncCanvasSize(canvas);
+
+            ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = "#22C55E";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const points = 120;
+            const step = canvas.width / points;
+            let x = 0;
+            const midY = canvas.height / 2;
+
+            for (let i = 0; i < points; i++) {
+                const phase = (i + this.ecgIndex) % 40;
+                let y = midY;
+                if (phase === 10) y = midY - 6;
+                else if (phase === 14) y = midY + 4;
+                else if (phase === 16) y = midY - 24;
+                else if (phase === 18) y = midY + 10;
+                else if (phase === 24) y = midY - 8;
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                x += step;
             }
-        }, 1000);
+            ctx.stroke();
+            this.ecgIndex = (this.ecgIndex + 1) % 40;
+        }
+        setTimeout(renderECG, 50);
+    };
+    renderECG();
+}
+
+startEpiTimer() {
+    this.epiInterval = setInterval(() => {
+        if (this.epiSecondsLeft > 0) {
+            this.epiSecondsLeft--;
+            const m = Math.floor(this.epiSecondsLeft / 60);
+            const s = this.epiSecondsLeft % 60;
+            if (this.epiTimerDisplay) {
+                this.epiTimerDisplay.textContent = `03:00 (REPEAT IN: ${m}m ${s < 10 ? "0" : ""}${s}s)`;
+            }
+        } else {
+            if (this.epiTimerDisplay) {
+                this.epiTimerDisplay.textContent = "03:00 (ALERT: REPEAT EPINEPHRINE NOW!)";
+            }
+        }
+    }, 1000);
+}
+
+updateDosageCalculations() {
+    const weight = parseFloat(this.toolWeightSlider.value);
+    if (this.toolWeightValue) this.toolWeightValue.textContent = `${weight.toFixed(1)} KG`;
+    const drug = this.toolDrugSelect.value;
+
+    if (drug === "epinephrine") {
+        const dose = (weight >= 50 ? 0.3 : Math.min(0.5, 0.01 * weight)).toFixed(2);
+        this.calculatedDoseText.textContent = `${dose} mg IM (Anterolateral Thigh)`;
+        this.calculatedDilutionText.textContent = `Dilution: 1 mg/1 mL (1:1,000) • Volume: ${dose} mL`;
+    } else if (drug === "amiodarone") {
+        const dose = weight < 40 ? `${(5 * weight).toFixed(0)} mg (5 mg/kg)` : "300 mg IV push";
+        this.calculatedDoseText.textContent = `${dose} (IV / IO Push)`;
+        this.calculatedDilutionText.textContent = "Dilution: 50 mg/mL in 20-30 mL D5W";
+    } else if (drug === "fentanyl") {
+        const dose = Math.min(100, Math.round(weight * 1.0));
+        this.calculatedDoseText.textContent = `${dose} mcg Slow IV / IN`;
+        this.calculatedDilutionText.textContent = `Dilution: 50 mcg/mL • Volume: ${(dose / 50).toFixed(1)} mL`;
+    } else if (drug === "naloxone") {
+        this.calculatedDoseText.textContent = "2.0 mg IN or 0.4 mg IV Titrate";
+        this.calculatedDilutionText.textContent = "Dilution: 2 mg/2 mL Prefilled Nasal Spray";
+    } else if (drug === "atropine") {
+        const dose = weight < 40 ? `${Math.max(0.1, (0.02 * weight)).toFixed(2)} mg` : "1.0 mg Rapid IV";
+        this.calculatedDoseText.textContent = `${dose} Rapid IV Push`;
+        this.calculatedDilutionText.textContent = "Dilution: 0.1 mg/mL • Repeat q3-5m (Max 3mg)";
+    } else if (drug === "midazolam") {
+        const dose = Math.min(5.0, (weight * 0.1)).toFixed(1);
+        this.calculatedDoseText.textContent = `${dose} mg IV / IN`;
+        this.calculatedDilutionText.textContent = `Dilution: 5 mg/mL • Volume: ${(dose / 5).toFixed(1)} mL`;
+    } else if (drug === "ketamine") {
+        const dose = (weight * 1.5).toFixed(0);
+        this.calculatedDoseText.textContent = `${dose} mg IV (1.5 mg/kg)`;
+        this.calculatedDilutionText.textContent = `Dilution: 50 mg/mL • Volume: ${(dose / 50).toFixed(1)} mL`;
+    }
+}
+
+// --- REPRODUCIBLE 1-CLICK JUDGE DEMO SEQUENCE ---
+runJudgeDemoSequence() {
+    this.appendRadioLog("JUDGE DEMO", "Initiating 1-Click Reproducible Interruption Proof...", "system");
+    this.selectedDelay = 3.5;
+
+    // Reset indicators
+    if (this.stressStep1) { this.stressStep1.className = "text-[#2563EB] font-bold font-mono animate-pulse"; this.stressStep1.textContent = "RUNNING (REQUEST #1 ACTIVE)..."; }
+    if (this.stressStep2) { this.stressStep2.className = "text-[#64748B] font-mono"; this.stressStep2.textContent = "STANDBY"; }
+    if (this.stressStep3) { this.stressStep3.className = "text-[#64748B] font-mono"; this.stressStep3.textContent = "STANDBY"; }
+    if (this.stressFinalResult) { this.stressFinalResult.className = "text-[#2563EB] font-bold font-mono"; this.stressFinalResult.textContent = "EVALUATING RECOVERY..."; }
+
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: "SET_MODE", mode: "RESONANCE" }));
+        this.ws.send(JSON.stringify({ type: "SET_DELAY", delay_sec: 3.5 }));
     }
 
-    updateDosageCalculations() {
-        const weight = parseFloat(this.toolWeightSlider.value);
-        if (this.toolWeightValue) this.toolWeightValue.textContent = `${weight.toFixed(1)} KG`;
-        const drug = this.toolDrugSelect.value;
+    // 1. VOICE REQUEST #1 ACTIVE -> RIME SPEAKING (Hospital Search with 3.5s delay)
+    const req1Turn = this.requestId + 1;
+    this.transmitCommand("Run stress test lookup with 3.5s synthetic tool delay");
 
-        if (drug === "epinephrine") {
-            const dose = (weight >= 50 ? 0.3 : Math.min(0.5, 0.01 * weight)).toFixed(2);
-            this.calculatedDoseText.textContent = `${dose} mg IM (Anterolateral Thigh)`;
-            this.calculatedDilutionText.textContent = `Dilution: 1 mg/1 mL (1:1,000) • Volume: ${dose} mL`;
-        } else if (drug === "amiodarone") {
-            const dose = weight < 40 ? `${(5 * weight).toFixed(0)} mg (5 mg/kg)` : "300 mg IV push";
-            this.calculatedDoseText.textContent = `${dose} (IV / IO Push)`;
-            this.calculatedDilutionText.textContent = "Dilution: 50 mg/mL in 20-30 mL D5W";
-        } else if (drug === "fentanyl") {
-            const dose = Math.min(100, Math.round(weight * 1.0));
-            this.calculatedDoseText.textContent = `${dose} mcg Slow IV / IN`;
-            this.calculatedDilutionText.textContent = `Dilution: 50 mcg/mL • Volume: ${(dose/50).toFixed(1)} mL`;
-        } else if (drug === "naloxone") {
-            this.calculatedDoseText.textContent = "2.0 mg IN or 0.4 mg IV Titrate";
-            this.calculatedDilutionText.textContent = "Dilution: 2 mg/2 mL Prefilled Nasal Spray";
-        } else if (drug === "atropine") {
-            const dose = weight < 40 ? `${Math.max(0.1, (0.02 * weight)).toFixed(2)} mg` : "1.0 mg Rapid IV";
-            this.calculatedDoseText.textContent = `${dose} Rapid IV Push`;
-            this.calculatedDilutionText.textContent = "Dilution: 0.1 mg/mL • Repeat q3-5m (Max 3mg)";
-        } else if (drug === "midazolam") {
-            const dose = Math.min(5.0, (weight * 0.1)).toFixed(1);
-            this.calculatedDoseText.textContent = `${dose} mg IV / IN`;
-            this.calculatedDilutionText.textContent = `Dilution: 5 mg/mL • Volume: ${(dose/5).toFixed(1)} mL`;
-        } else if (drug === "ketamine") {
-            const dose = (weight * 1.5).toFixed(0);
-            this.calculatedDoseText.textContent = `${dose} mg IV (1.5 mg/kg)`;
-            this.calculatedDilutionText.textContent = `Dilution: 50 mg/mL • Volume: ${(dose/50).toFixed(1)} mL`;
-        }
+    if (this.stressStep1) {
+        this.stressStep1.className = "text-[#16A34A] font-bold font-mono";
+        this.stressStep1.textContent = `PASSED (REQUEST #${req1Turn} ACTIVE & TOOL DELAYED 3.5s)`;
     }
 
-    // --- REPRODUCIBLE 1-CLICK JUDGE DEMO SEQUENCE ---
-    runJudgeDemoSequence() {
-        this.appendRadioLog("JUDGE DEMO", "Initiating 1-Click Reproducible Interruption Proof...", "system");
-        this.selectedDelay = 3.5;
-        
-        // Reset indicators
-        if (this.stressStep1) { this.stressStep1.className = "text-[#2563EB] font-bold font-mono animate-pulse"; this.stressStep1.textContent = "RUNNING (REQUEST #1 ACTIVE)..."; }
-        if (this.stressStep2) { this.stressStep2.className = "text-[#64748B] font-mono"; this.stressStep2.textContent = "STANDBY"; }
-        if (this.stressStep3) { this.stressStep3.className = "text-[#64748B] font-mono"; this.stressStep3.textContent = "STANDBY"; }
-        if (this.stressFinalResult) { this.stressFinalResult.className = "text-[#2563EB] font-bold font-mono"; this.stressFinalResult.textContent = "EVALUATING RECOVERY..."; }
-
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({ type: "SET_MODE", mode: "RESONANCE" }));
-            this.ws.send(JSON.stringify({ type: "SET_DELAY", delay_sec: 3.5 }));
+    // 2. USER INTERRUPTED -> AUDIO FLUSHED -> REQUEST #1 INVALIDATED (at 1.0s)
+    setTimeout(() => {
+        if (this.stressStep2) {
+            this.stressStep2.className = "text-[#16A34A] font-bold font-mono";
+            this.stressStep2.textContent = `PASSED (USER INTERRUPTED: AUDIO FLUSHED <4ms, REQUEST #${req1Turn} INVALIDATED)`;
         }
+        this.handleInterrupt();
 
-        // 1. VOICE REQUEST #1 ACTIVE -> RIME SPEAKING (Hospital Search with 3.5s delay)
-        const req1Turn = this.requestId + 1;
-        this.transmitCommand("Run stress test lookup with 3.5s synthetic tool delay");
-        
-        if (this.stressStep1) {
-            this.stressStep1.className = "text-[#16A34A] font-bold font-mono";
-            this.stressStep1.textContent = `PASSED (REQUEST #${req1Turn} ACTIVE & TOOL DELAYED 3.5s)`;
-        }
-
-        // 2. USER INTERRUPTED -> AUDIO FLUSHED -> REQUEST #1 INVALIDATED (at 1.0s)
+        // 3. REQUEST #2 ACTIVE (Critical Epinephrine Order)
         setTimeout(() => {
-            if (this.stressStep2) {
-                this.stressStep2.className = "text-[#16A34A] font-bold font-mono";
-                this.stressStep2.textContent = `PASSED (USER INTERRUPTED: AUDIO FLUSHED <4ms, REQUEST #${req1Turn} INVALIDATED)`;
+            const req2Turn = this.requestId + 1;
+            if (this.stressStep3) {
+                this.stressStep3.className = "text-[#2563EB] font-bold font-mono animate-pulse";
+                this.stressStep3.textContent = `EVALUATING STALE RESULT FIREWALL FOR REQUEST #${req2Turn}...`;
             }
-            this.handleInterrupt();
+            this.transmitCommand("Cancel that! Patient crashing, dose 0.3mg epinephrine immediately!");
 
-            // 3. REQUEST #2 ACTIVE (Critical Epinephrine Order)
+            // 4. STALE TOOL RESULT RETURNED -> STALE RESULT BLOCKED -> RECOVERY VERIFIED
             setTimeout(() => {
-                const req2Turn = this.requestId + 1;
                 if (this.stressStep3) {
-                    this.stressStep3.className = "text-[#2563EB] font-bold font-mono animate-pulse";
-                    this.stressStep3.textContent = `EVALUATING STALE RESULT FIREWALL FOR REQUEST #${req2Turn}...`;
+                    this.stressStep3.className = "text-[#16A34A] font-bold font-mono";
+                    this.stressStep3.textContent = `PASSED (STALE REQUEST #${req1Turn} BLOCKED, REQUEST #${req2Turn} COMPLETED)`;
                 }
-                this.transmitCommand("Cancel that! Patient crashing, dose 0.3mg epinephrine immediately!");
+                if (this.stressFinalResult) {
+                    this.stressFinalResult.className = "px-2 py-0.5 rounded bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] font-bold font-mono inline-block";
+                    this.stressFinalResult.textContent = "INTERRUPTION RECOVERY VERIFIED";
+                }
+            }, 2500);
+        }, 500);
+    }, 1000);
+}
 
-                // 4. STALE TOOL RESULT RETURNED -> STALE RESULT BLOCKED -> RECOVERY VERIFIED
-                setTimeout(() => {
-                    if (this.stressStep3) {
-                        this.stressStep3.className = "text-[#16A34A] font-bold font-mono";
-                        this.stressStep3.textContent = `PASSED (STALE REQUEST #${req1Turn} BLOCKED, REQUEST #${req2Turn} COMPLETED)`;
-                    }
-                    if (this.stressFinalResult) {
-                        this.stressFinalResult.className = "px-2 py-0.5 rounded bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] font-bold font-mono inline-block";
-                        this.stressFinalResult.textContent = "INTERRUPTION RECOVERY VERIFIED";
-                    }
-                }, 2500);
-            }, 500);
-        }, 1000);
+bindEvents() {
+    // PTT Button Pointer & Touch & Mouse Events (Press and hold to speak)
+    if (this.pttButton) {
+        const handlePressStart = (e) => {
+            e.preventDefault();
+            if (!this.isListening) {
+                this.startListening();
+            }
+        };
+
+        const handlePressEnd = (e) => {
+            e.preventDefault();
+            if (this.isListening) {
+                this.stopListening();
+            }
+        };
+
+        // Pointer Events
+        this.pttButton.addEventListener("pointerdown", handlePressStart);
+        this.pttButton.addEventListener("pointerup", handlePressEnd);
+        this.pttButton.addEventListener("pointerleave", handlePressEnd);
+        this.pttButton.addEventListener("pointercancel", handlePressEnd);
+
+        // Touch Events fallback
+        this.pttButton.addEventListener("touchstart", handlePressStart, { passive: false });
+        this.pttButton.addEventListener("touchend", handlePressEnd, { passive: false });
+        this.pttButton.addEventListener("touchcancel", handlePressEnd, { passive: false });
+
+        // Mouse Events fallback
+        this.pttButton.addEventListener("mousedown", handlePressStart);
+        this.pttButton.addEventListener("mouseup", handlePressEnd);
     }
 
-    bindEvents() {
-        // PTT Button Pointer & Touch & Mouse Events (Press and hold to speak)
-        if (this.pttButton) {
-            const handlePressStart = (e) => {
-                e.preventDefault();
-                if (!this.isListening) {
-                    this.startListening();
-                }
-            };
+    // Global PointerUp / MouseUp safety listener
+    window.addEventListener("pointerup", () => {
+        if (this.isListening) this.stopListening();
+    });
+    window.addEventListener("mouseup", () => {
+        if (this.isListening) this.stopListening();
+    });
 
-            const handlePressEnd = (e) => {
-                e.preventDefault();
-                if (this.isListening) {
-                    this.stopListening();
-                }
-            };
-
-            // Pointer Events
-            this.pttButton.addEventListener("pointerdown", handlePressStart);
-            this.pttButton.addEventListener("pointerup", handlePressEnd);
-            this.pttButton.addEventListener("pointerleave", handlePressEnd);
-            this.pttButton.addEventListener("pointercancel", handlePressEnd);
-
-            // Touch Events fallback
-            this.pttButton.addEventListener("touchstart", handlePressStart, { passive: false });
-            this.pttButton.addEventListener("touchend", handlePressEnd, { passive: false });
-            this.pttButton.addEventListener("touchcancel", handlePressEnd, { passive: false });
-
-            // Mouse Events fallback
-            this.pttButton.addEventListener("mousedown", handlePressStart);
-            this.pttButton.addEventListener("mouseup", handlePressEnd);
+    // Spacebar Keyboard Listener (Prevents Page Scroll!)
+    window.addEventListener("keydown", (e) => {
+        if (e.code === "Space" && !this.isInputFocused()) {
+            e.preventDefault();
+            if (!e.repeat && !this.isListening) {
+                this.startListening();
+            }
         }
+    });
 
-        // Global PointerUp / MouseUp safety listener
-        window.addEventListener("pointerup", () => {
-            if (this.isListening) this.stopListening();
-        });
-        window.addEventListener("mouseup", () => {
-            if (this.isListening) this.stopListening();
-        });
+    window.addEventListener("keyup", (e) => {
+        if (e.code === "Space" && !this.isInputFocused()) {
+            e.preventDefault();
+            if (this.isListening) {
+                this.stopListening();
+            }
+        }
+    });
 
-        // Spacebar Keyboard Listener (Prevents Page Scroll!)
-        window.addEventListener("keydown", (e) => {
-            if (e.code === "Space" && !this.isInputFocused()) {
-                e.preventDefault();
-                if (!e.repeat && !this.isListening) {
-                    this.startListening();
+    // Audio Mute / Toggle Button
+    if (this.audioMuteToggleBtn) {
+        this.audioMuteToggleBtn.addEventListener("click", () => {
+            this.soundEnabled = !this.soundEnabled;
+            this.voiceEngine.soundEnabled = this.soundEnabled;
+            if (this.audioMuteText && this.audioMuteIcon) {
+                if (this.soundEnabled) {
+                    this.audioMuteText.textContent = "🔊 AUDIO ON";
+                    this.audioMuteIcon.className = "fa-solid fa-volume-high text-[#16A34A]";
+                    console.log("[AUDIO] Audio output ENABLED");
+                } else {
+                    this.audioMuteText.textContent = "🔇 AUDIO OFF";
+                    this.audioMuteIcon.className = "fa-solid fa-volume-xmark text-[#DC2626]";
+                    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+                    console.log("[AUDIO] Audio output DISABLED");
                 }
             }
         });
+    }
 
-        window.addEventListener("keyup", (e) => {
-            if (e.code === "Space" && !this.isInputFocused()) {
-                e.preventDefault();
-                if (this.isListening) {
-                    this.stopListening();
-                }
-            }
+    // Flush / Barge-In Button
+    if (this.flushBargeInBtn) {
+        this.flushBargeInBtn.addEventListener("click", () => this.handleInterrupt());
+    }
+
+    // Transmit Command Button
+    if (this.transmitCommandBtn) {
+        this.transmitCommandBtn.addEventListener("click", () => {
+            const text = this.tacticalCommandInput ? this.tacticalCommandInput.value.trim() : "";
+            if (text) this.transmitCommand(text);
         });
+    }
 
-        // Audio Mute / Toggle Button
-        if (this.audioMuteToggleBtn) {
-            this.audioMuteToggleBtn.addEventListener("click", () => {
-                this.soundEnabled = !this.soundEnabled;
-                this.voiceEngine.soundEnabled = this.soundEnabled;
-                if (this.audioMuteText && this.audioMuteIcon) {
-                    if (this.soundEnabled) {
-                        this.audioMuteText.textContent = "🔊 AUDIO ON";
-                        this.audioMuteIcon.className = "fa-solid fa-volume-high text-[#16A34A]";
-                        console.log("[AUDIO] Audio output ENABLED");
-                    } else {
-                        this.audioMuteText.textContent = "🔇 AUDIO OFF";
-                        this.audioMuteIcon.className = "fa-solid fa-volume-xmark text-[#DC2626]";
-                        if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-                        console.log("[AUDIO] Audio output DISABLED");
-                    }
-                }
-            });
-        }
-
-        // Flush / Barge-In Button
-        if (this.flushBargeInBtn) {
-            this.flushBargeInBtn.addEventListener("click", () => this.handleInterrupt());
-        }
-
-        // Transmit Command Button
-        if (this.transmitCommandBtn) {
-            this.transmitCommandBtn.addEventListener("click", () => {
-                const text = this.tacticalCommandInput ? this.tacticalCommandInput.value.trim() : "";
+    // Command Input Enter Key
+    if (this.tacticalCommandInput) {
+        this.tacticalCommandInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                const text = this.tacticalCommandInput.value.trim();
                 if (text) this.transmitCommand(text);
-            });
-        }
-
-        // Command Input Enter Key
-        if (this.tacticalCommandInput) {
-            this.tacticalCommandInput.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    const text = this.tacticalCommandInput.value.trim();
-                    if (text) this.transmitCommand(text);
-                }
-            });
-        }
-
-        // Mode Toggle Button
-        if (this.modeToggleBtn) {
-            this.modeToggleBtn.addEventListener("click", () => {
-                const nextMode = this.currentMode === "RESONANCE" ? "NAIVE" : "RESONANCE";
-                this.setAgentMode(nextMode);
-                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send(JSON.stringify({ type: "SET_MODE", mode: nextMode }));
-                }
-            });
-        }
-
-        // Judge Demo Button
-        if (this.judgeDemoBtn) {
-            this.judgeDemoBtn.addEventListener("click", () => this.runJudgeDemoSequence());
-        }
-
-        // Replay Incident Button
-        if (this.replayIncidentBtn) {
-            this.replayIncidentBtn.addEventListener("click", async () => {
-                try {
-                    const res = await fetch("/api/replay/timeline");
-                    const data = await res.json();
-                    if (data.timeline && data.timeline.length > 0) {
-                        this.appendRadioLog("REPLAY INCIDENT", "Replaying recorded event trajectory:", "system");
-                        data.timeline.forEach((item, idx) => {
-                            setTimeout(() => {
-                                this.appendRadioLog(item.category, item.detail, "tool");
-                            }, idx * 300);
-                        });
-                        const summary = `Replay trajectory complete. ${data.timeline.length} recorded events retrieved.`;
-                        this.speakAgentResponse(summary);
-                    } else {
-                        const msg = "No recorded events yet. Run a turn or stress test first.";
-                        this.appendRadioLog("REPLAY INCIDENT", msg, "system");
-                        this.speakAgentResponse(msg);
-                    }
-                } catch (e) {}
-            });
-        }
-
-        // Synthetic Tool Delay Options Buttons
-        document.querySelectorAll(".delay-option-btn").forEach(btn => {
-            btn.addEventListener("click", async () => {
-                const delay = parseFloat(btn.getAttribute("data-delay"));
-                document.querySelectorAll(".delay-option-btn").forEach(b => {
-                    b.classList.remove("active", "bg-[#EFF6FF]", "border-[#2563EB]", "text-[#2563EB]");
-                    b.classList.add("bg-[#FFFFFF]", "border-[#CBD5E1]", "text-[#0F172A]");
-                });
-                btn.classList.remove("bg-[#FFFFFF]", "border-[#CBD5E1]", "text-[#0F172A]");
-                btn.classList.add("active", "bg-[#EFF6FF]", "border-[#2563EB]", "text-[#2563EB]");
-                this.selectedDelay = delay;
-
-                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send(JSON.stringify({ type: "SET_DELAY", delay_sec: delay }));
-                }
-                try {
-                    await fetch("/api/stress/delay", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ delay_sec: delay })
-                    });
-                } catch (e) {}
-            });
+            }
         });
-
-        // Stress Scenario Dropdown
-        if (this.stressScenarioSelect) {
-            this.stressScenarioSelect.addEventListener("change", (e) => {
-                const val = e.target.value;
-                this.selectedScenario = val;
-                this.appendRadioLog("STRESS LAB", `Stress scenario preset set to: ${val}`, "system");
-            });
-        }
-
-        // Scenario Buttons (5 Incidents)
-        document.querySelectorAll(".incident-tab-btn").forEach(btn => {
-            btn.addEventListener("click", async () => {
-                const idx = parseInt(btn.getAttribute("data-index"));
-                document.querySelectorAll(".incident-tab-btn").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                
-                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send(JSON.stringify({ type: "SWITCH_SCENARIO", index: idx }));
-                }
-                try {
-                    const res = await fetch(`/api/scenario/select/${idx}`, { method: "POST" });
-                    const data = await res.json();
-                    const inc = data.incident || data;
-                    if (inc) {
-                        this.renderIncident(inc);
-                        if (data.vitals) this.renderVitals(data.vitals);
-                        this.speakAgentResponse(`Switched active incident to ${inc.type || inc.id}`);
-                    }
-                } catch (e) {
-                    console.error("ERROR SWITCHING INCIDENT", e);
-                }
-            });
-        });
-
-        // Randomize Case
-        const randBtn = document.getElementById("randomizeIncidentBtn");
-        if (randBtn) {
-            randBtn.addEventListener("click", async () => {
-                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                    this.ws.send(JSON.stringify({ type: "SWITCH_SCENARIO" }));
-                }
-                try {
-                    const res = await fetch("/api/scenario/randomize", { method: "POST" });
-                    const data = await res.json();
-                    const inc = data.incident || data;
-                    if (inc) {
-                        this.renderIncident(inc);
-                        if (data.vitals) this.renderVitals(data.vitals);
-                        const presets = ["MED-7829", "MED-9102", "MED-4421", "MED-6380", "MED-3199"];
-                        const matchIdx = presets.indexOf(inc.id);
-                        if (matchIdx !== -1) {
-                            document.querySelectorAll(".incident-tab-btn").forEach((b, idx) => {
-                                if (idx === matchIdx) b.classList.add("active");
-                                else b.classList.remove("active");
-                            });
-                        }
-                        this.speakAgentResponse(`Randomized emergency scenario. Active incident ${inc.id}: ${inc.type}`);
-                    }
-                } catch (e) {}
-            });
-        }
-
-        // Tool Tabs (STRESS LAB, DOSAGE, HOSPITALS, FLEET)
-        document.querySelectorAll(".ws-tab-btn").forEach(tab => {
-            tab.addEventListener("click", () => {
-                const target = tab.getAttribute("data-target");
-                document.querySelectorAll(".ws-tab-btn").forEach(t => t.classList.remove("active"));
-                document.querySelectorAll(".tab-pane").forEach(p => p.classList.add("hidden"));
-                tab.classList.add("active");
-                const pane = document.getElementById(target);
-                if (pane) pane.classList.remove("hidden");
-            });
-        });
-
-        // Dosage Inputs
-        if (this.toolWeightSlider) this.toolWeightSlider.addEventListener("input", () => this.updateDosageCalculations());
-        if (this.toolDrugSelect) this.toolDrugSelect.addEventListener("change", () => this.updateDosageCalculations());
-        if (this.speakDosageOrderBtn) {
-            this.speakDosageOrderBtn.addEventListener("click", () => {
-                const dose = this.calculatedDoseText.textContent;
-                this.transmitCommand(`Administer ${dose} for ${this.toolWeightValue.textContent} patient.`);
-            });
-        }
-
-        // Query Hospitals
-        if (this.queryHospitalRadarBtn) {
-            this.queryHospitalRadarBtn.addEventListener("click", () => {
-                this.transmitCommand("Find nearest Level 1 trauma centers and burn beds.");
-            });
-        }
-
-        // Quick Fleet Dispatch
-        document.querySelectorAll(".dispatch-unit-quick").forEach(b => {
-            b.addEventListener("click", () => {
-                const u = b.getAttribute("data-unit");
-                this.transmitCommand(`Dispatch ${u} Code 3 immediately`);
-            });
-        });
-
-        // Quick Tactical Orders (One-Touch Voice Presets)
-        document.querySelectorAll(".quick-tactical-order").forEach(b => {
-            b.addEventListener("click", () => {
-                const presetText = b.getAttribute("data-text");
-                this.transmitCommand(presetText);
-            });
-        });
-
-        // Stress Benchmark Test
-        if (this.runStressTestBenchmarkBtn) {
-            this.runStressTestBenchmarkBtn.addEventListener("click", () => {
-                this.runJudgeDemoSequence();
-            });
-        }
-
-        // Vitals Modal
-        if (this.editVitalsBtn) this.editVitalsBtn.addEventListener("click", () => this.vitalsModal.classList.remove("hidden"));
-        if (this.closeVitalsModalBtn) this.closeVitalsModalBtn.addEventListener("click", () => this.vitalsModal.classList.add("hidden"));
-        if (this.saveVitalsModalBtn) {
-            this.saveVitalsModalBtn.addEventListener("click", () => {
-                const hr = parseInt(this.inputEditHR.value);
-                const bp = this.inputEditBP.value;
-                const spo2 = parseInt(this.inputEditSpO2.value);
-                const gcs = parseInt(this.inputEditGCS.value);
-                this.vitalsModal.classList.add("hidden");
-                this.transmitCommand(`Log vitals: blood pressure ${bp}, heart rate ${hr}, SpO2 ${spo2} percent, GCS ${gcs}`);
-            });
-        }
     }
+
+    // Mode Toggle Button
+    if (this.modeToggleBtn) {
+        this.modeToggleBtn.addEventListener("click", () => {
+            const nextMode = this.currentMode === "RESONANCE" ? "NAIVE" : "RESONANCE";
+            this.setAgentMode(nextMode);
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({ type: "SET_MODE", mode: nextMode }));
+            }
+        });
+    }
+
+    // Judge Demo Button
+    if (this.judgeDemoBtn) {
+        this.judgeDemoBtn.addEventListener("click", () => this.runJudgeDemoSequence());
+    }
+
+    // Replay Incident Button
+    if (this.replayIncidentBtn) {
+        this.replayIncidentBtn.addEventListener("click", async () => {
+            try {
+                const res = await fetch("/api/replay/timeline");
+                const data = await res.json();
+                if (data.timeline && data.timeline.length > 0) {
+                    this.appendRadioLog("REPLAY INCIDENT", "Replaying recorded event trajectory:", "system");
+                    data.timeline.forEach((item, idx) => {
+                        setTimeout(() => {
+                            this.appendRadioLog(item.category, item.detail, "tool");
+                        }, idx * 300);
+                    });
+                    const summary = `Replay trajectory complete. ${data.timeline.length} recorded events retrieved.`;
+                    this.speakAgentResponse(summary);
+                } else {
+                    const msg = "No recorded events yet. Run a turn or stress test first.";
+                    this.appendRadioLog("REPLAY INCIDENT", msg, "system");
+                    this.speakAgentResponse(msg);
+                }
+            } catch (e) { }
+        });
+    }
+
+    // Synthetic Tool Delay Options Buttons
+    document.querySelectorAll(".delay-option-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const delay = parseFloat(btn.getAttribute("data-delay"));
+            document.querySelectorAll(".delay-option-btn").forEach(b => {
+                b.classList.remove("active", "bg-[#EFF6FF]", "border-[#2563EB]", "text-[#2563EB]");
+                b.classList.add("bg-[#FFFFFF]", "border-[#CBD5E1]", "text-[#0F172A]");
+            });
+            btn.classList.remove("bg-[#FFFFFF]", "border-[#CBD5E1]", "text-[#0F172A]");
+            btn.classList.add("active", "bg-[#EFF6FF]", "border-[#2563EB]", "text-[#2563EB]");
+            this.selectedDelay = delay;
+
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({ type: "SET_DELAY", delay_sec: delay }));
+            }
+            try {
+                await fetch("/api/stress/delay", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ delay_sec: delay })
+                });
+            } catch (e) { }
+        });
+    });
+
+    // Stress Scenario Dropdown
+    if (this.stressScenarioSelect) {
+        this.stressScenarioSelect.addEventListener("change", (e) => {
+            const val = e.target.value;
+            this.selectedScenario = val;
+            this.appendRadioLog("STRESS LAB", `Stress scenario preset set to: ${val}`, "system");
+        });
+    }
+
+    // Scenario Buttons (5 Incidents)
+    document.querySelectorAll(".incident-tab-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const idx = parseInt(btn.getAttribute("data-index"));
+            document.querySelectorAll(".incident-tab-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({ type: "SWITCH_SCENARIO", index: idx }));
+            }
+            try {
+                const res = await fetch(`/api/scenario/select/${idx}`, { method: "POST" });
+                const data = await res.json();
+                const inc = data.incident || data;
+                if (inc) {
+                    this.renderIncident(inc);
+                    if (data.vitals) this.renderVitals(data.vitals);
+                    this.speakAgentResponse(`Switched active incident to ${inc.type || inc.id}`);
+                }
+            } catch (e) {
+                console.error("ERROR SWITCHING INCIDENT", e);
+            }
+        });
+    });
+
+    // Randomize Case
+    const randBtn = document.getElementById("randomizeIncidentBtn");
+    if (randBtn) {
+        randBtn.addEventListener("click", async () => {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify({ type: "SWITCH_SCENARIO" }));
+            }
+            try {
+                const res = await fetch("/api/scenario/randomize", { method: "POST" });
+                const data = await res.json();
+                const inc = data.incident || data;
+                if (inc) {
+                    this.renderIncident(inc);
+                    if (data.vitals) this.renderVitals(data.vitals);
+                    const presets = ["MED-7829", "MED-9102", "MED-4421", "MED-6380", "MED-3199"];
+                    const matchIdx = presets.indexOf(inc.id);
+                    if (matchIdx !== -1) {
+                        document.querySelectorAll(".incident-tab-btn").forEach((b, idx) => {
+                            if (idx === matchIdx) b.classList.add("active");
+                            else b.classList.remove("active");
+                        });
+                    }
+                    this.speakAgentResponse(`Randomized emergency scenario. Active incident ${inc.id}: ${inc.type}`);
+                }
+            } catch (e) { }
+        });
+    }
+
+    // Tool Tabs (STRESS LAB, DOSAGE, HOSPITALS, FLEET)
+    document.querySelectorAll(".ws-tab-btn").forEach(tab => {
+        tab.addEventListener("click", () => {
+            const target = tab.getAttribute("data-target");
+            document.querySelectorAll(".ws-tab-btn").forEach(t => t.classList.remove("active"));
+            document.querySelectorAll(".tab-pane").forEach(p => p.classList.add("hidden"));
+            tab.classList.add("active");
+            const pane = document.getElementById(target);
+            if (pane) pane.classList.remove("hidden");
+        });
+    });
+
+    // Dosage Inputs
+    if (this.toolWeightSlider) this.toolWeightSlider.addEventListener("input", () => this.updateDosageCalculations());
+    if (this.toolDrugSelect) this.toolDrugSelect.addEventListener("change", () => this.updateDosageCalculations());
+    if (this.speakDosageOrderBtn) {
+        this.speakDosageOrderBtn.addEventListener("click", () => {
+            const dose = this.calculatedDoseText.textContent;
+            this.transmitCommand(`Administer ${dose} for ${this.toolWeightValue.textContent} patient.`);
+        });
+    }
+
+    // Query Hospitals
+    if (this.queryHospitalRadarBtn) {
+        this.queryHospitalRadarBtn.addEventListener("click", () => {
+            this.transmitCommand("Find nearest Level 1 trauma centers and burn beds.");
+        });
+    }
+
+    // Quick Fleet Dispatch
+    document.querySelectorAll(".dispatch-unit-quick").forEach(b => {
+        b.addEventListener("click", () => {
+            const u = b.getAttribute("data-unit");
+            this.transmitCommand(`Dispatch ${u} Code 3 immediately`);
+        });
+    });
+
+    // Quick Tactical Orders (One-Touch Voice Presets)
+    document.querySelectorAll(".quick-tactical-order").forEach(b => {
+        b.addEventListener("click", () => {
+            const presetText = b.getAttribute("data-text");
+            this.transmitCommand(presetText);
+        });
+    });
+
+    // Stress Benchmark Test
+    if (this.runStressTestBenchmarkBtn) {
+        this.runStressTestBenchmarkBtn.addEventListener("click", () => {
+            this.runJudgeDemoSequence();
+        });
+    }
+
+    // Vitals Modal
+    if (this.editVitalsBtn) this.editVitalsBtn.addEventListener("click", () => this.vitalsModal.classList.remove("hidden"));
+    if (this.closeVitalsModalBtn) this.closeVitalsModalBtn.addEventListener("click", () => this.vitalsModal.classList.add("hidden"));
+    if (this.saveVitalsModalBtn) {
+        this.saveVitalsModalBtn.addEventListener("click", () => {
+            const hr = parseInt(this.inputEditHR.value);
+            const bp = this.inputEditBP.value;
+            const spo2 = parseInt(this.inputEditSpO2.value);
+            const gcs = parseInt(this.inputEditGCS.value);
+            this.vitalsModal.classList.add("hidden");
+            this.transmitCommand(`Log vitals: blood pressure ${bp}, heart rate ${hr}, SpO2 ${spo2} percent, GCS ${gcs}`);
+        });
+    }
+}
 }
 
 window.addEventListener("DOMContentLoaded", () => {
