@@ -107,7 +107,7 @@ class SpeechVoiceEngine {
         this.soundFX.init();
     }
 
-    playBase64Audio(b64Data, turnId, onStarted, onEnded) {
+    playBase64Audio(b64Data, turnId, onStarted, onEnded, format = "wav") {
         this.init();
         this.stopAll(turnId);
 
@@ -120,7 +120,8 @@ class SpeechVoiceEngine {
             for (let i = 0; i < binaryString.length; i++) {
                 bytes[i] = binaryString.charCodeAt(i);
             }
-            const blob = new Blob([bytes.buffer], { type: "audio/wav" });
+            const mimeType = format === "mp3" ? "audio/mpeg" : "audio/wav";
+            const blob = new Blob([bytes.buffer], { type: mimeType });
             this.currentAudioUrl = URL.createObjectURL(blob);
             this.currentAudioElement = new Audio(this.currentAudioUrl);
 
@@ -874,7 +875,8 @@ class TacticalApp {
                             }
                             const phaseLabel = meta.phase === "FILLER_STATUS" ? "STATUS FILLER" : "RESONANCE COPILOT";
                             this.appendRadioLog(phaseLabel, meta.text || "Transmission complete.", meta.phase === "FILLER_STATUS" ? "filler" : "copilot");
-                        }
+                        },
+                        meta.format || "wav"
                     );
                 } else if (meta.text) {
                     // Centralized TTS fallback when WebSocket Streams text without raw audio bytes
@@ -924,98 +926,110 @@ class TacticalApp {
             }
             if (d.type === "STATE_CHANGE") {
                 this.setConversationState(d.state);
-            } else if (d.type === "TURN_START") {
-                if (this.telemetryTurn) this.telemetryTurn.textContent = `#${d.turn_id}`;
-                if (this.activeTurnBadge) this.activeTurnBadge.textContent = `TURN #${d.turn_id}`;
-                this.turnCount++;
-                if (this.turnCounterBadge) this.turnCounterBadge.textContent = `${this.turnCount} TURNS`;
-                this.appendRadioLog("PARAMEDIC", d.transcript, "user");
-            } else if (d.type === "FILLER_START") {
-                this.appendRadioLog("STATUS FILLER", d.text, "filler");
-            } else if (d.type === "TOOL_START") {
-                this.setConversationState("TOOL_RUNNING");
-                if (this.telemetryTool) this.telemetryTool.textContent = `Running ${d.tool_name}...`;
-                this.appendRadioLog("CLINICAL TOOL", `Executing async tool: ${d.tool_name}`, "tool");
-            } else if (d.type === "TOOL_COMPLETE") {
-                if (this.telemetryTool) this.telemetryTool.textContent = `${d.duration_ms} ms`;
-                if (d.tool_name === "log_patient_vitals" && d.result.vitals) {
-                    this.renderVitals(d.result.vitals);
-                } else if (d.tool_name === "dispatch_backup_units" && d.result.dispatched) {
-                    this.addFleetCard(d.result.dispatched);
-                }
-            } else if (d.type === "TURN_COMPLETE") {
-                if (this.telemetryTotal) this.telemetryTotal.textContent = `${d.total_latency_ms} ms`;
-                if (d.response_text) {
-                    this.speakAgentResponse(d.response_text, d.turn_id);
-                } else {
-                    this.setConversationState("COMPLETED");
-                    setTimeout(() => {
-                        if (this.conversationState === "COMPLETED") this.setConversationState("IDLE");
-                    }, 1500);
-                }
+            }
+        } else if (d.type === "TURN_START") {
+            // Backend is authoritative for the actual turn number
+            if (d.turn_id) {
+                this.activeTurnId = d.turn_id;
+            }
+
+            if (this.telemetryTurn) {
+                this.telemetryTurn.textContent = `#${d.turn_id}`;
+            }
+
+            if (this.activeTurnBadge) {
+                this.activeTurnBadge.textContent = `TURN #${d.turn_id}`;
+            }
+
+            this.turnCount++;
+            if (this.turnCounterBadge) this.turnCounterBadge.textContent = `${this.turnCount} TURNS`;
+            this.appendRadioLog("PARAMEDIC", d.transcript, "user");
+        } else if (d.type === "FILLER_START") {
+            this.appendRadioLog("STATUS FILLER", d.text, "filler");
+        } else if (d.type === "TOOL_START") {
+            this.setConversationState("TOOL_RUNNING");
+            if (this.telemetryTool) this.telemetryTool.textContent = `Running ${d.tool_name}...`;
+            this.appendRadioLog("CLINICAL TOOL", `Executing async tool: ${d.tool_name}`, "tool");
+        } else if (d.type === "TOOL_COMPLETE") {
+            if (this.telemetryTool) this.telemetryTool.textContent = `${d.duration_ms} ms`;
+            if (d.tool_name === "log_patient_vitals" && d.result.vitals) {
+                this.renderVitals(d.result.vitals);
+            } else if (d.tool_name === "dispatch_backup_units" && d.result.dispatched) {
+                this.addFleetCard(d.result.dispatched);
+            }
+        } else if (d.type === "TURN_COMPLETE") {
+            if (this.telemetryTotal) this.telemetryTotal.textContent = `${d.total_latency_ms} ms`;
+            if (d.response_text) {
+                this.speakAgentResponse(d.response_text, d.turn_id);
+            } else {
+                this.setConversationState("COMPLETED");
+                setTimeout(() => {
+                    if (this.conversationState === "COMPLETED") this.setConversationState("IDLE");
+                }, 1500);
             }
         }
     }
+}
 
-    renderIncident(inc) {
-        this.currentIncident = inc;
-        const incId = inc.id || "MED-7829";
-        if (this.incidentIdText) this.incidentIdText.textContent = incId;
-        if (this.headerIncidentId) this.headerIncidentId.textContent = incId;
-        document.querySelectorAll(".incident-id-text").forEach(el => el.textContent = incId);
-        if (this.incidentTitleText) this.incidentTitleText.textContent = inc.type || "Active Incident";
-        if (this.incidentLocationText) this.incidentLocationText.innerHTML = `<i class="fa-solid fa-location-dot text-[#DC2626] mr-1"></i><span>${inc.location || "Scene Location"}</span>`;
-        if (this.triageBadge) {
-            this.triageBadge.textContent = inc.triage_label || "PRIORITY 1 - IMMEDIATE";
-        }
-
-        const pat = inc.patient || { name: "Unknown", age: 30, weight_kg: 70, gender: "Adult", allergy: "NKDA", chief_complaint: "Trauma" };
-        if (this.patName) this.patName.textContent = pat.name;
-        if (this.patAgeGender) this.patAgeGender.textContent = `${pat.age} YRS / ${pat.gender.toUpperCase()}`;
-        if (this.patWeight) this.patWeight.textContent = `${pat.weight_kg} KG`;
-        if (this.patAllergy) this.patAllergy.textContent = pat.allergy;
-        if (this.patComplaint) this.patComplaint.textContent = pat.chief_complaint;
-
-        if (this.toolWeightSlider) {
-            this.toolWeightSlider.value = pat.weight_kg;
-            this.updateDosageCalculations();
-        }
+renderIncident(inc) {
+    this.currentIncident = inc;
+    const incId = inc.id || "MED-7829";
+    if (this.incidentIdText) this.incidentIdText.textContent = incId;
+    if (this.headerIncidentId) this.headerIncidentId.textContent = incId;
+    document.querySelectorAll(".incident-id-text").forEach(el => el.textContent = incId);
+    if (this.incidentTitleText) this.incidentTitleText.textContent = inc.type || "Active Incident";
+    if (this.incidentLocationText) this.incidentLocationText.innerHTML = `<i class="fa-solid fa-location-dot text-[#DC2626] mr-1"></i><span>${inc.location || "Scene Location"}</span>`;
+    if (this.triageBadge) {
+        this.triageBadge.textContent = inc.triage_label || "PRIORITY 1 - IMMEDIATE";
     }
 
-    renderVitals(v) {
-        if (v.heart_rate !== undefined) {
-            this.valHR.innerHTML = `${v.heart_rate} <span class="text-[9px] text-[#94A3B8]">BPM</span>`;
-            if (this.hrStatus) this.hrStatus.textContent = v.heart_rate > 100 ? "TACHYCARDIA" : (v.heart_rate < 60 ? "BRADYCARDIA" : "NORMAL SINUS");
-            if (this.inputEditHR) this.inputEditHR.value = v.heart_rate;
-        }
-        if (v.blood_pressure !== undefined) {
-            this.valBP.textContent = v.blood_pressure;
-            if (this.inputEditBP) this.inputEditBP.value = v.blood_pressure;
-        }
-        if (v.spo2 !== undefined) {
-            this.valSpO2.innerHTML = `${v.spo2} <span class="text-[9px] text-[#94A3B8]">%</span>`;
-            if (this.spo2Status) this.spo2Status.textContent = v.spo2 < 90 ? "CRITICAL HYPOXIA" : (v.spo2 < 95 ? "MILD HYPOXIA" : "ADEQUATE");
-            if (this.inputEditSpO2) this.inputEditSpO2.value = v.spo2;
-        }
-        if (v.gcs !== undefined) {
-            this.valGCS.innerHTML = `${v.gcs} <span class="text-[9px] text-[#94A3B8]">/ 15</span>`;
-            if (this.gcsStatus) this.gcsStatus.textContent = v.gcs <= 8 ? "SEVERE (INTUBATE)" : (v.gcs <= 12 ? "MODERATE" : "MILD / CONSCIOUS");
-            if (this.inputEditGCS) this.inputEditGCS.value = v.gcs;
-        }
+    const pat = inc.patient || { name: "Unknown", age: 30, weight_kg: 70, gender: "Adult", allergy: "NKDA", chief_complaint: "Trauma" };
+    if (this.patName) this.patName.textContent = pat.name;
+    if (this.patAgeGender) this.patAgeGender.textContent = `${pat.age} YRS / ${pat.gender.toUpperCase()}`;
+    if (this.patWeight) this.patWeight.textContent = `${pat.weight_kg} KG`;
+    if (this.patAllergy) this.patAllergy.textContent = pat.allergy;
+    if (this.patComplaint) this.patComplaint.textContent = pat.chief_complaint;
+
+    if (this.toolWeightSlider) {
+        this.toolWeightSlider.value = pat.weight_kg;
+        this.updateDosageCalculations();
     }
+}
 
-    renderHospitals(hospitals) {
-        if (!this.hospitalsListContainer) return;
-        this.hospitalsListContainer.innerHTML = "";
-        hospitals.forEach(h => {
-            const card = document.createElement("div");
-            const divertClass = h.divert ? "border-[#FECACA] bg-[#FEF2F2]" : "border-[#E2E8F0] bg-[#FFFFFF]";
-            const badge = h.divert
-                ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#DC2626] text-white font-bold border border-[#DC2626] font-mono">DIVERT</span>`
-                : `<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#F0FDF4] text-[#16A34A] font-bold border border-[#BBF7D0] font-mono">ACCEPTING</span>`;
+renderVitals(v) {
+    if (v.heart_rate !== undefined) {
+        this.valHR.innerHTML = `${v.heart_rate} <span class="text-[9px] text-[#94A3B8]">BPM</span>`;
+        if (this.hrStatus) this.hrStatus.textContent = v.heart_rate > 100 ? "TACHYCARDIA" : (v.heart_rate < 60 ? "BRADYCARDIA" : "NORMAL SINUS");
+        if (this.inputEditHR) this.inputEditHR.value = v.heart_rate;
+    }
+    if (v.blood_pressure !== undefined) {
+        this.valBP.textContent = v.blood_pressure;
+        if (this.inputEditBP) this.inputEditBP.value = v.blood_pressure;
+    }
+    if (v.spo2 !== undefined) {
+        this.valSpO2.innerHTML = `${v.spo2} <span class="text-[9px] text-[#94A3B8]">%</span>`;
+        if (this.spo2Status) this.spo2Status.textContent = v.spo2 < 90 ? "CRITICAL HYPOXIA" : (v.spo2 < 95 ? "MILD HYPOXIA" : "ADEQUATE");
+        if (this.inputEditSpO2) this.inputEditSpO2.value = v.spo2;
+    }
+    if (v.gcs !== undefined) {
+        this.valGCS.innerHTML = `${v.gcs} <span class="text-[9px] text-[#94A3B8]">/ 15</span>`;
+        if (this.gcsStatus) this.gcsStatus.textContent = v.gcs <= 8 ? "SEVERE (INTUBATE)" : (v.gcs <= 12 ? "MODERATE" : "MILD / CONSCIOUS");
+        if (this.inputEditGCS) this.inputEditGCS.value = v.gcs;
+    }
+}
 
-            card.className = `border ${divertClass} p-2.5 rounded text-xs space-y-1 font-mono shadow-xs`;
-            card.innerHTML = `
+renderHospitals(hospitals) {
+    if (!this.hospitalsListContainer) return;
+    this.hospitalsListContainer.innerHTML = "";
+    hospitals.forEach(h => {
+        const card = document.createElement("div");
+        const divertClass = h.divert ? "border-[#FECACA] bg-[#FEF2F2]" : "border-[#E2E8F0] bg-[#FFFFFF]";
+        const badge = h.divert
+            ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#DC2626] text-white font-bold border border-[#DC2626] font-mono">DIVERT</span>`
+            : `<span class="text-[9px] px-1.5 py-0.2 rounded bg-[#F0FDF4] text-[#16A34A] font-bold border border-[#BBF7D0] font-mono">ACCEPTING</span>`;
+
+        card.className = `border ${divertClass} p-2.5 rounded text-xs space-y-1 font-mono shadow-xs`;
+        card.innerHTML = `
                 <div class="flex items-center justify-between font-bold">
                     <span class="text-[#0F172A]">${h.name} (L${h.trauma_level})</span>
                     ${badge}
@@ -1029,367 +1043,367 @@ class TacticalApp {
                     <button class="route-medic-btn px-2 py-0.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded" data-name="${h.name}">ROUTE MEDIC</button>
                 </div>
             `;
-            this.hospitalsListContainer.appendChild(card);
+        this.hospitalsListContainer.appendChild(card);
+    });
+
+    document.querySelectorAll(".route-medic-btn").forEach(b => {
+        b.addEventListener("click", () => {
+            const name = b.getAttribute("data-name");
+            this.transmitCommand(`Route transport unit to ${name}`);
         });
+    });
+}
 
-        document.querySelectorAll(".route-medic-btn").forEach(b => {
-            b.addEventListener("click", () => {
-                const name = b.getAttribute("data-name");
-                this.transmitCommand(`Route transport unit to ${name}`);
-            });
-        });
-    }
+renderFleet(units) {
+    if (!this.fleetListContainer) return;
+    this.fleetListContainer.innerHTML = "";
+    units.forEach(u => this.addFleetCard(u));
+}
 
-    renderFleet(units) {
-        if (!this.fleetListContainer) return;
-        this.fleetListContainer.innerHTML = "";
-        units.forEach(u => this.addFleetCard(u));
-    }
-
-    addFleetCard(unit) {
-        if (!this.fleetListContainer) return;
-        const card = document.createElement("div");
-        card.className = "bg-[#FFFFFF] border border-[#E2E8F0] p-2 rounded text-xs space-y-0.5 font-mono shadow-xs";
-        card.innerHTML = `
+addFleetCard(unit) {
+    if (!this.fleetListContainer) return;
+    const card = document.createElement("div");
+    card.className = "bg-[#FFFFFF] border border-[#E2E8F0] p-2 rounded text-xs space-y-0.5 font-mono shadow-xs";
+    card.innerHTML = `
             <div class="flex justify-between items-center font-bold">
                 <span class="text-[#0F172A]">${unit.unit_id} (${unit.type})</span>
                 <span class="text-[9px] px-1.5 rounded bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] font-bold">${unit.status || "EN ROUTE"}</span>
             </div>
             <div class="text-[11px] text-[#64748B]">Staging: ${unit.staging_area} • ETA: <b class="text-[#16A34A]">${unit.eta_minutes}m</b></div>
         `;
-        this.fleetListContainer.prepend(card);
+    this.fleetListContainer.prepend(card);
+}
+
+appendRadioLog(sender, text, type = "copilot") {
+    if (!this.radioTranscriptFeed) return;
+    while (this.radioTranscriptFeed.children.length > 80) {
+        this.radioTranscriptFeed.removeChild(this.radioTranscriptFeed.firstChild);
+    }
+    const div = document.createElement("div");
+    const timeStr = new Date().toLocaleTimeString();
+    div.className = "p-2 rounded text-xs space-y-0.5 border font-mono";
+
+    if (type === "user") {
+        div.className += " bg-[#EFF6FF] border-[#BFDBFE] text-[#0F172A]";
+        div.innerHTML = `<div class="flex justify-between text-[9px] text-[#2563EB] font-bold"><span>[${timeStr}] 🎙️ ${sender} (COMMAND)</span><span>TRANSMIT</span></div><p class="text-[#0F172A] font-semibold">${text}</p>`;
+    } else if (type === "filler") {
+        div.className += " bg-[#FFFBEB] border-[#FDE68A] text-[#92400E] italic";
+        div.innerHTML = `<div class="text-[9px] text-[#D97706] font-bold">[${timeStr}] ⏳ ACOUSTIC STATUS FILLER</div><p>${text}</p>`;
+    } else if (type === "tool") {
+        div.className += " bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]";
+        div.innerHTML = `<div class="text-[9px] text-[#64748B] font-bold">[${timeStr}] 🔧 ${sender}</div><p>${text}</p>`;
+    } else if (type === "flush") {
+        div.className += " bg-[#FEF2F2] border-[#FECACA] text-[#DC2626] font-bold";
+        div.innerHTML = `<div class="text-[9px] text-[#DC2626] font-bold">[${timeStr}] ⚡ ${sender}</div><p>${text}</p>`;
+    } else if (type === "system") {
+        div.className += " bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]";
+        div.innerHTML = `<div class="text-[9px] text-[#2563EB] font-bold">[${timeStr}] ⚙️ ${sender}</div><p>${text}</p>`;
+    } else {
+        div.className += " bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]";
+        div.innerHTML = `<div class="flex justify-between text-[9px] text-[#16A34A] font-bold"><span>[${timeStr}] 📻 ${sender} (RIME NEURAL)</span><span>DISPATCH</span></div><p class="text-[#0F172A] font-semibold">${text}</p>`;
     }
 
-    appendRadioLog(sender, text, type = "copilot") {
-        if (!this.radioTranscriptFeed) return;
-        while (this.radioTranscriptFeed.children.length > 80) {
-            this.radioTranscriptFeed.removeChild(this.radioTranscriptFeed.firstChild);
-        }
-        const div = document.createElement("div");
-        const timeStr = new Date().toLocaleTimeString();
-        div.className = "p-2 rounded text-xs space-y-0.5 border font-mono";
+    this.radioTranscriptFeed.appendChild(div);
+    this.radioTranscriptFeed.scrollTop = this.radioTranscriptFeed.scrollHeight;
+}
 
-        if (type === "user") {
-            div.className += " bg-[#EFF6FF] border-[#BFDBFE] text-[#0F172A]";
-            div.innerHTML = `<div class="flex justify-between text-[9px] text-[#2563EB] font-bold"><span>[${timeStr}] 🎙️ ${sender} (COMMAND)</span><span>TRANSMIT</span></div><p class="text-[#0F172A] font-semibold">${text}</p>`;
-        } else if (type === "filler") {
-            div.className += " bg-[#FFFBEB] border-[#FDE68A] text-[#92400E] italic";
-            div.innerHTML = `<div class="text-[9px] text-[#D97706] font-bold">[${timeStr}] ⏳ ACOUSTIC STATUS FILLER</div><p>${text}</p>`;
-        } else if (type === "tool") {
-            div.className += " bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]";
-            div.innerHTML = `<div class="text-[9px] text-[#64748B] font-bold">[${timeStr}] 🔧 ${sender}</div><p>${text}</p>`;
-        } else if (type === "flush") {
-            div.className += " bg-[#FEF2F2] border-[#FECACA] text-[#DC2626] font-bold";
-            div.innerHTML = `<div class="text-[9px] text-[#DC2626] font-bold">[${timeStr}] ⚡ ${sender}</div><p>${text}</p>`;
-        } else if (type === "system") {
-            div.className += " bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]";
-            div.innerHTML = `<div class="text-[9px] text-[#2563EB] font-bold">[${timeStr}] ⚙️ ${sender}</div><p>${text}</p>`;
-        } else {
-            div.className += " bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A]";
-            div.innerHTML = `<div class="flex justify-between text-[9px] text-[#16A34A] font-bold"><span>[${timeStr}] 📻 ${sender} (RIME NEURAL)</span><span>DISPATCH</span></div><p class="text-[#0F172A] font-semibold">${text}</p>`;
-        }
+isInputFocused() {
+    const active = document.activeElement;
+    if (!active) return false;
+    const tag = active.tagName.toLowerCase();
+    return tag === "input" || tag === "textarea" || tag === "select" || active.isContentEditable;
+}
 
-        this.radioTranscriptFeed.appendChild(div);
-        this.radioTranscriptFeed.scrollTop = this.radioTranscriptFeed.scrollHeight;
+// --- REAL VOICE INPUT & PTT RECOGNITION HANDLER ---
+startListening() {
+    console.log("[VOICE] start requested");
+    // Reset previous recognition state before starting new recording
+    this.lastRecognizedText = "";
+    this.currentInterimText = "";
+    this.currentRawHeard = "";
+    this.currentInterpreted = "";
+    this.alreadyTransmittedTurn = false;
+
+    // If system is currently speaking, tool running, or processing, barge-in interrupt first!
+    if (this.conversationState === "SPEAKING" || this.conversationState === "TOOL_RUNNING" || this.conversationState === "PROCESSING" || this.conversationState === "FLUSHING") {
+        this.handleInterrupt();
     }
 
-    isInputFocused() {
-        const active = document.activeElement;
-        if (!active) return false;
-        const tag = active.tagName.toLowerCase();
-        return tag === "input" || tag === "textarea" || tag === "select" || active.isContentEditable;
+    if (this.isListening) return;
+
+    if (!this.hasSpeechRec) {
+        if (this.transceiverStatusText) {
+            this.transceiverStatusText.textContent = "Voice recognition temporarily unavailable. Press Push to Speak to retry.";
+            this.transceiverStatusText.className = "absolute top-2 left-2 text-[10px] font-bold text-amber-700 font-mono tracking-wider uppercase";
+        }
+        this.appendRadioLog("SYSTEM", "Speech recognition is not supported in this browser.", "system");
+        this.setConversationState("IDLE");
+        return;
     }
 
-    // --- REAL VOICE INPUT & PTT RECOGNITION HANDLER ---
-    startListening() {
-        console.log("[VOICE] start requested");
-        // Reset previous recognition state before starting new recording
-        this.lastRecognizedText = "";
-        this.currentInterimText = "";
-        this.currentRawHeard = "";
-        this.currentInterpreted = "";
-        this.alreadyTransmittedTurn = false;
+    this.shouldBeListening = true;
+    this.isPushToSpeakActive = true;
+    this.isListening = true;
+    this.stopRequested = false;
+    this.setConversationState("LISTENING");
+    this.startMicAudioContext();
 
-        // If system is currently speaking, tool running, or processing, barge-in interrupt first!
-        if (this.conversationState === "SPEAKING" || this.conversationState === "TOOL_RUNNING" || this.conversationState === "PROCESSING" || this.conversationState === "FLUSHING") {
-            this.handleInterrupt();
-        }
-
-        if (this.isListening) return;
-
-        if (!this.hasSpeechRec) {
-            if (this.transceiverStatusText) {
-                this.transceiverStatusText.textContent = "Voice recognition temporarily unavailable. Press Push to Speak to retry.";
-                this.transceiverStatusText.className = "absolute top-2 left-2 text-[10px] font-bold text-amber-700 font-mono tracking-wider uppercase";
-            }
-            this.appendRadioLog("SYSTEM", "Speech recognition is not supported in this browser.", "system");
-            this.setConversationState("IDLE");
-            return;
-        }
-
-        this.shouldBeListening = true;
-        this.isPushToSpeakActive = true;
-        this.isListening = true;
-        this.stopRequested = false;
-        this.setConversationState("LISTENING");
-        this.startMicAudioContext();
-
+    try {
+        this.recognition.start();
+    } catch (err) {
         try {
+            this.recognition.abort();
             this.recognition.start();
-        } catch (err) {
-            try {
-                this.recognition.abort();
-                this.recognition.start();
-            } catch (e) {
-                console.warn("[VOICE] STT start failed", e);
-                this.isListening = false;
-                this.shouldBeListening = false;
-                this.isPushToSpeakActive = false;
-                this.stopMicAudioContext();
-                this.setConversationState("IDLE");
-            }
-        }
-    }
-
-    stopListening() {
-        if (!this.shouldBeListening && !this.isListening && !this.stopRequested) return;
-        console.log("[VOICE] stop requested");
-        this.shouldBeListening = false;
-        this.isPushToSpeakActive = false;
-        this.stopRequested = true;
-
-        if (this.recognition) {
-            try {
-                this.recognition.stop();
-            } catch (e) {
-                this.isListening = false;
-                this.stopMicAudioContext();
-                const captured = (this.lastRecognizedText || this.currentInterpreted || this.currentInterimText || (this.tacticalCommandInput ? this.tacticalCommandInput.value.trim() : "")).trim();
-                this.lastRecognizedText = "";
-                this.currentInterimText = "";
-                if (captured && !this.alreadyTransmittedTurn) {
-                    this.alreadyTransmittedTurn = true;
-                    this.transmitCommand(captured);
-                } else if (!this.alreadyTransmittedTurn) {
-                    this.setConversationState("IDLE");
-                }
-            }
-        } else {
+        } catch (e) {
+            console.warn("[VOICE] STT start failed", e);
             this.isListening = false;
+            this.shouldBeListening = false;
+            this.isPushToSpeakActive = false;
             this.stopMicAudioContext();
             this.setConversationState("IDLE");
         }
     }
+}
 
-    initVoices() {
-        if ("speechSynthesis" in window) {
-            const populateVoices = () => {
-                this.availableVoices = window.speechSynthesis.getVoices();
-                console.log(`[TTS] voices populated: ${this.availableVoices.length} voices available`);
-            };
-            populateVoices();
-            window.speechSynthesis.onvoiceschanged = populateVoices;
+stopListening() {
+    if (!this.shouldBeListening && !this.isListening && !this.stopRequested) return;
+    console.log("[VOICE] stop requested");
+    this.shouldBeListening = false;
+    this.isPushToSpeakActive = false;
+    this.stopRequested = true;
+
+    if (this.recognition) {
+        try {
+            this.recognition.stop();
+        } catch (e) {
+            this.isListening = false;
+            this.stopMicAudioContext();
+            const captured = (this.lastRecognizedText || this.currentInterpreted || this.currentInterimText || (this.tacticalCommandInput ? this.tacticalCommandInput.value.trim() : "")).trim();
+            this.lastRecognizedText = "";
+            this.currentInterimText = "";
+            if (captured && !this.alreadyTransmittedTurn) {
+                this.alreadyTransmittedTurn = true;
+                this.transmitCommand(captured);
+            } else if (!this.alreadyTransmittedTurn) {
+                this.setConversationState("IDLE");
+            }
         }
+    } else {
+        this.isListening = false;
+        this.stopMicAudioContext();
+        this.setConversationState("IDLE");
+    }
+}
+
+initVoices() {
+    if ("speechSynthesis" in window) {
+        const populateVoices = () => {
+            this.availableVoices = window.speechSynthesis.getVoices();
+            console.log(`[TTS] voices populated: ${this.availableVoices.length} voices available`);
+        };
+        populateVoices();
+        window.speechSynthesis.onvoiceschanged = populateVoices;
+    }
+}
+
+// --- CENTRALIZED TTS RESPONSE FUNCTION ---
+speakAgentResponse(text, turnId, onEnded) {
+    const turn = turnId || this.activeTurnId;
+
+    // 1. Cancel previous speech immediately
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        console.log("[TTS] speech cancelled");
     }
 
-    // --- CENTRALIZED TTS RESPONSE FUNCTION ---
-    speakAgentResponse(text, turnId, onEnded) {
-        const turn = turnId || this.activeTurnId;
+    // 2. Validate text is not empty
+    if (!text || !text.trim()) {
+        if (onEnded) onEnded();
+        return;
+    }
 
-        // 1. Cancel previous speech immediately
-        if ("speechSynthesis" in window) {
-            window.speechSynthesis.cancel();
-            console.log("[TTS] speech cancelled");
-        }
+    const cleanText = text.trim();
 
-        // 2. Validate text is not empty
-        if (!text || !text.trim()) {
-            if (onEnded) onEnded();
-            return;
-        }
+    // 3. Debug logging requirements
+    console.log("[TTS] requested");
+    console.log("[TTS] text:", cleanText);
 
-        const cleanText = text.trim();
+    // 4. Add response to Transcript Log
+    this.appendRadioLog("RESONANCE COPILOT", cleanText, "copilot");
 
-        // 3. Debug logging requirements
-        console.log("[TTS] requested");
-        console.log("[TTS] text:", cleanText);
-
-        // 4. Add response to Transcript Log
-        this.appendRadioLog("RESONANCE COPILOT", cleanText, "copilot");
-
-        // 5. Audio Toggle Check (AUDIO ON vs AUDIO OFF)
-        if (!this.soundEnabled) {
-            console.log("[TTS] Audio is OFF (muted). Displaying text visually but skipping speech.");
-            this.setConversationState("RESULT_READY");
-            setTimeout(() => {
-                this.setConversationState("COMPLETED");
-                setTimeout(() => {
-                    if (this.conversationState === "COMPLETED") this.setConversationState("IDLE");
-                }, 1000);
-            }, 400);
-            if (onEnded) onEnded();
-            return;
-        }
-
-        // 6. Execute Speech Synthesis
-        if ("speechSynthesis" in window) {
-            this.setConversationState("RESULT_READY");
-
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.rate = 1.0;
-            utterance.volume = 1.0;
-
-            const voices = (this.availableVoices && this.availableVoices.length > 0)
-                ? this.availableVoices
-                : window.speechSynthesis.getVoices();
-
-            const preferredVoice = voices.find(v => v.lang && v.lang.startsWith("en") && (
-                v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("David") || v.name.includes("Zira") || v.name.includes("Jenny") || v.name.includes("Guy")
-            )) || voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
-
-            if (preferredVoice) {
-                utterance.voice = preferredVoice;
-                console.log("[TTS] voice selected:", preferredVoice.name);
-            } else {
-                console.log("[TTS] voice selected: browser default");
-            }
-
-            utterance.onstart = () => {
-                console.log("[TTS] speech started");
-                this.voiceEngine.isPlaying = true;
-                this.setConversationState("SPEAKING");
-            };
-
-            utterance.onend = () => {
-                console.log("[TTS] speech ended");
-                this.voiceEngine.isPlaying = false;
-                if (turn === this.activeTurnId) {
-                    this.setConversationState("COMPLETED");
-                    setTimeout(() => {
-                        if (this.conversationState === "COMPLETED") {
-                            this.setConversationState("IDLE");
-                        }
-                    }, 1200);
-                }
-                if (onEnded) onEnded();
-            };
-
-            utterance.onerror = (err) => {
-                console.warn("[TTS] speech error", err);
-                this.voiceEngine.isPlaying = false;
-                this.setConversationState("IDLE");
-                if (onEnded) onEnded();
-            };
-
-            window.speechSynthesis.speak(utterance);
-        } else {
-            console.warn("[TTS] window.speechSynthesis unavailable in browser");
+    // 5. Audio Toggle Check (AUDIO ON vs AUDIO OFF)
+    if (!this.soundEnabled) {
+        console.log("[TTS] Audio is OFF (muted). Displaying text visually but skipping speech.");
+        this.setConversationState("RESULT_READY");
+        setTimeout(() => {
             this.setConversationState("COMPLETED");
             setTimeout(() => {
                 if (this.conversationState === "COMPLETED") this.setConversationState("IDLE");
-            }, 1200);
+            }, 1000);
+        }, 400);
+        if (onEnded) onEnded();
+        return;
+    }
+
+    // 6. Execute Speech Synthesis
+    if ("speechSynthesis" in window) {
+        this.setConversationState("RESULT_READY");
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.rate = 1.0;
+        utterance.volume = 1.0;
+
+        const voices = (this.availableVoices && this.availableVoices.length > 0)
+            ? this.availableVoices
+            : window.speechSynthesis.getVoices();
+
+        const preferredVoice = voices.find(v => v.lang && v.lang.startsWith("en") && (
+            v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("David") || v.name.includes("Zira") || v.name.includes("Jenny") || v.name.includes("Guy")
+        )) || voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
+
+        if (preferredVoice) {
+            utterance.voice = preferredVoice;
+            console.log("[TTS] voice selected:", preferredVoice.name);
+        } else {
+            console.log("[TTS] voice selected: browser default");
+        }
+
+        utterance.onstart = () => {
+            console.log("[TTS] speech started");
+            this.voiceEngine.isPlaying = true;
+            this.setConversationState("SPEAKING");
+        };
+
+        utterance.onend = () => {
+            console.log("[TTS] speech ended");
+            this.voiceEngine.isPlaying = false;
+            if (turn === this.activeTurnId) {
+                this.setConversationState("COMPLETED");
+                setTimeout(() => {
+                    if (this.conversationState === "COMPLETED") {
+                        this.setConversationState("IDLE");
+                    }
+                }, 1200);
+            }
             if (onEnded) onEnded();
+        };
+
+        utterance.onerror = (err) => {
+            console.warn("[TTS] speech error", err);
+            this.voiceEngine.isPlaying = false;
+            this.setConversationState("IDLE");
+            if (onEnded) onEnded();
+        };
+
+        window.speechSynthesis.speak(utterance);
+    } else {
+        console.warn("[TTS] window.speechSynthesis unavailable in browser");
+        this.setConversationState("COMPLETED");
+        setTimeout(() => {
+            if (this.conversationState === "COMPLETED") this.setConversationState("IDLE");
+        }, 1200);
+        if (onEnded) onEnded();
+    }
+}
+
+// --- COMMAND TRANSMISSION & ASYNC PIPELINE ---
+transmitCommand(text) {
+    if (!text || !text.trim()) return;
+    const cleanText = text.trim();
+
+    // Update Command Input Field & HEARD display
+    if (this.tacticalCommandInput) this.tacticalCommandInput.value = cleanText;
+
+    // If system is currently speaking, tool running, or processing, barge-in interrupt first!
+    if (this.conversationState === "SPEAKING" || this.conversationState === "TOOL_RUNNING" || this.conversationState === "PROCESSING" || this.conversationState === "FLUSHING") {
+        this.handleInterrupt();
+    }
+
+    // Clear any existing fallback timer from previous turns
+    if (this.localFallbackTimer) {
+        clearTimeout(this.localFallbackTimer);
+        this.localFallbackTimer = null;
+    }
+
+    // Stop active STT listening cleanly
+    if (this.isListening) {
+        this.isListening = false;
+        this.stopMicAudioContext();
+        if (this.recognition) {
+            try { this.recognition.stop(); } catch (e) { }
         }
     }
 
-    // --- COMMAND TRANSMISSION & ASYNC PIPELINE ---
-    transmitCommand(text) {
-        if (!text || !text.trim()) return;
-        const cleanText = text.trim();
+    // Increment Request / Turn ID for stale fencing
+    this.requestId++;
+    const currentTurnId = this.requestId;
+    this.activeTurnId = currentTurnId;
+    this.activeTurnUuid = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `req-${currentTurnId}-${Date.now()}`;
 
-        // Update Command Input Field & HEARD display
-        if (this.tacticalCommandInput) this.tacticalCommandInput.value = cleanText;
+    if (this.telemetryTurn) this.telemetryTurn.textContent = `#${currentTurnId}`;
+    if (this.activeTurnBadge) this.activeTurnBadge.textContent = `TURN #${currentTurnId}`;
 
-        // If system is currently speaking, tool running, or processing, barge-in interrupt first!
-        if (this.conversationState === "SPEAKING" || this.conversationState === "TOOL_RUNNING" || this.conversationState === "PROCESSING" || this.conversationState === "FLUSHING") {
-            this.handleInterrupt();
+    this.setConversationState("PROCESSING");
+    this.voiceEngine.init();
+
+    this.turnCount++;
+    if (this.turnCounterBadge) this.turnCounterBadge.textContent = `${this.turnCount} TURNS`;
+    this.appendRadioLog("PARAMEDIC", cleanText, "user");
+
+    const responseText = this.generateResponseForCommand(cleanText);
+
+    // Notify WS Backend if active for telemetry logging
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({
+            type: "USER_UTTERANCE",
+            transcript: cleanText,
+            turn_id: currentTurnId,
+            request_id: this.activeTurnUuid,
+            speaker: this.speakerSelect.value,
+            model_id: this.modelSelect.value
+        }));
+    }
+    // Only use the local response fallback when WebSocket backend is NOT connected.
+    const backendConnected = this.ws && this.ws.readyState === WebSocket.OPEN;
+
+    if (!backendConnected) {
+        const delaySec = this.selectedDelay || 0;
+        const delayMs = Math.max(150, delaySec * 1000);
+
+        if (delaySec > 0) {
+            this.setConversationState("TOOL_RUNNING");
+            if (this.telemetryTool) {
+                this.telemetryTool.textContent = `${delaySec}s synthetic delay...`;
+            }
+            this.appendRadioLog(
+                "CLINICAL TOOL",
+                `Executing async tool with ${delaySec}s synthetic delay...`,
+                "tool"
+            );
         }
 
-        // Clear any existing fallback timer from previous turns
-        if (this.localFallbackTimer) {
-            clearTimeout(this.localFallbackTimer);
+        this.localFallbackTimer = setTimeout(() => {
             this.localFallbackTimer = null;
-        }
 
-        // Stop active STT listening cleanly
-        if (this.isListening) {
-            this.isListening = false;
-            this.stopMicAudioContext();
-            if (this.recognition) {
-                try { this.recognition.stop(); } catch (e) { }
-            }
-        }
-
-        // Increment Request / Turn ID for stale fencing
-        this.requestId++;
-        const currentTurnId = this.requestId;
-        this.activeTurnId = currentTurnId;
-        this.activeTurnUuid = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `req-${currentTurnId}-${Date.now()}`;
-
-        if (this.telemetryTurn) this.telemetryTurn.textContent = `#${currentTurnId}`;
-        if (this.activeTurnBadge) this.activeTurnBadge.textContent = `TURN #${currentTurnId}`;
-
-        this.setConversationState("PROCESSING");
-        this.voiceEngine.init();
-
-        this.turnCount++;
-        if (this.turnCounterBadge) this.turnCounterBadge.textContent = `${this.turnCount} TURNS`;
-        this.appendRadioLog("PARAMEDIC", cleanText, "user");
-
-        const responseText = this.generateResponseForCommand(cleanText);
-
-        // Notify WS Backend if active for telemetry logging
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({
-                type: "USER_UTTERANCE",
-                transcript: cleanText,
-                turn_id: currentTurnId,
-                request_id: this.activeTurnUuid,
-                speaker: this.speakerSelect.value,
-                model_id: this.modelSelect.value
-            }));
-        }
-        // Only use the local response fallback when WebSocket backend is NOT connected.
-        const backendConnected = this.ws && this.ws.readyState === WebSocket.OPEN;
-
-        if (!backendConnected) {
-            const delaySec = this.selectedDelay || 0;
-            const delayMs = Math.max(150, delaySec * 1000);
-
-            if (delaySec > 0) {
-                this.setConversationState("TOOL_RUNNING");
-                if (this.telemetryTool) {
-                    this.telemetryTool.textContent = `${delaySec}s synthetic delay...`;
-                }
-                this.appendRadioLog(
-                    "CLINICAL TOOL",
-                    `Executing async tool with ${delaySec}s synthetic delay...`,
-                    "tool"
+            if (currentTurnId !== this.activeTurnId) {
+                console.warn(
+                    `[STALE FIREWALL] Turn #${currentTurnId} blocked! Active turn is #${this.activeTurnId}`
                 );
+                this.appendFirewallLog({
+                    source: "Async Tool Pipeline",
+                    status: "BLOCKED",
+                    old_turn_id: currentTurnId,
+                    current_turn_id: this.activeTurnId,
+                    reason: `Interruption Fenced: Blocked stale output from turn #${currentTurnId}`
+                });
+                this.updateStateGraphNode("STALE_RESULT_BLOCKED");
+                return;
             }
 
-            this.localFallbackTimer = setTimeout(() => {
-                this.localFallbackTimer = null;
-
-                if (currentTurnId !== this.activeTurnId) {
-                    console.warn(
-                        `[STALE FIREWALL] Turn #${currentTurnId} blocked! Active turn is #${this.activeTurnId}`
-                    );
-                    this.appendFirewallLog({
-                        source: "Async Tool Pipeline",
-                        status: "BLOCKED",
-                        old_turn_id: currentTurnId,
-                        current_turn_id: this.activeTurnId,
-                        reason: `Interruption Fenced: Blocked stale output from turn #${currentTurnId}`
-                    });
-                    this.updateStateGraphNode("STALE_RESULT_BLOCKED");
-                    return;
-                }
-
-                this.speakAgentResponse(responseText, currentTurnId);
-            }, delayMs);
-        }
+            this.speakAgentResponse(responseText, currentTurnId);
+        }, delayMs);
     }
+}
 }
 
 generateResponseForCommand(text) {
